@@ -146,11 +146,12 @@ public class ResourceInit {
                 log.info("getResult = "+ getResult);
                 if (getResult.getCode() == 200) {
                     JSONObject json = JSON.parseObject(getResult.getData().toString());
-                    JSONArray array = json.getJSONArray("servers");
-                    if (array.size() > 0 && array.getJSONObject(0).containsKey("extendInfo")) {
-                        nacosServerVersion =
-                            array.getJSONObject(0).getJSONObject("extendInfo").getString("version");
-                    }
+                    nacosServerVersion = json.getString("version");
+                    //JSONArray array = json.getJSONArray("servers");
+                    //if (array.size() > 0 && array.getJSONObject(0).containsKey("extendInfo")) {
+                    //    nacosServerVersion =
+                    //        array.getJSONObject(0).getJSONObject("extendInfo").getString("version");
+                    //}
                 } else {
                     log.info("getNacosServerVersion return " + JSON.toJSONString(getResult));
                 }
@@ -257,16 +258,16 @@ public class ResourceInit {
         }
     }
 
+    // /nacos/v1/ns/operator/servers  will be removed
     public static HttpRestResult getOperatorServers(String url) throws Exception{
         HttpRestResult httpResult =
-            request(url + "/nacos/v1/ns/operator/servers",
+            request(url + "/nacos/v1/console/server/state",
                 Collections.<String>emptyList(),
                 ParamsUtils.newParams()
                     .done(), StringUtils.EMPTY, "UTF-8", String.valueOf(HttpMethod.GET));
         return  httpResult;
     }
 
-    // /nacos/v2/console/namespace/list {"timestamp":"2023-05-06T14:00:01.857+0800","status":404,"error":"Not Found","message":"No message available","path":"/nacos/v2/console/namespace/list"}
     public static HttpRestResult listNamespaceV1(String url) throws Exception{
         HttpRestResult httpResult =
             request(url + "/nacos/v1/console/namespaces",

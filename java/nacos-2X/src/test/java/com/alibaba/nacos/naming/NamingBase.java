@@ -45,10 +45,15 @@ public class NamingBase extends BaseOperate {
 
     @BeforeAll
     public static void setUpAll() throws Exception {
-        naming = NacosFactory.createNamingService(properties);
-        String[] serverArr = serverList.split(",");
-        String url = String.format("http://%s", serverArr[0]);
-        base = new URL(url);
+        try {
+            naming = NacosFactory.createNamingService(properties);
+            String[] serverArr = serverList.split(",");
+            String server0 = serverArr[0].endsWith(":8848") ? serverArr[0] : serverArr[0]+":8848";
+            String url = String.format("http://%s", server0);
+            base = new URL(url);
+        } catch (Exception e) {
+            log.error("NamingBase init NamingService Exception", e);
+        }
     }
 
     @AfterAll
@@ -205,129 +210,160 @@ public class NamingBase extends BaseOperate {
 
 
 
-    public HttpRestResult createService(String namespace, String serviceName, String metadata) throws Exception{
-        //创建service
-        HttpRestResult httpResult = request(this.base.toString() + "/nacos/v2/ns/service/" + serviceName ,
-            Collections.<String>emptyList(),
-            ParamsUtils.newParams()
-                .appendParam("serviceName", serviceName)
-                .appendParam("namespaceId", namespace)
-                .appendParam("metadata", metadata)
-                .appendParam("groupName", Constants.DEFAULT_GROUP)
-                .done(), StringUtils.EMPTY, "UTF-8",
-            String.valueOf(HttpMethod.POST));
-        return  httpResult;
-    }
-
-    public HttpRestResult modifyService(String namespace, String serviceName, String metadata) throws Exception{
-        //修改service
-        HttpRestResult httpResult = request(this.base.toString() + "/nacos/v2/ns/service/" + serviceName,
-            Collections.<String>emptyList(),
-            ParamsUtils.newParams()
-                .appendParam("serviceName", serviceName)
-                .appendParam("metadata", metadata)
-                .appendParam("namespaceId", namespace)
-                .appendParam("groupName", Constants.DEFAULT_GROUP)
-                .done(), StringUtils.EMPTY, "UTF-8", String.valueOf(HttpMethod.PUT));
-        return  httpResult;
-    }
-
-    public HttpRestResult listService(String namespace) throws Exception {
-        //查询service
-        HttpRestResult httpResult = request(this.base.toString() + "/nacos/v2/ns/service/list",
-            Collections.<String>emptyList(),
-            ParamsUtils.newParams()
-                .appendParam("namespaceId", namespace)
-                .appendParam("pageNo", "1")
-                .appendParam("pageSize", "100000")
-                .appendParam("selector", "{\"type\":\"none\",\"contextType\":\"NONE\"}")
-                .done(), StringUtils.EMPTY, "UTF-8", String.valueOf(HttpMethod.GET));
-        return  httpResult;
-    }
-
-    public HttpRestResult getService(String namespace, String serviceName, String clusterDetail) throws Exception {
-        //查询service
-        Map<String, String> params = new HashMap<String, String>();
-        if (StringUtils.isBlank(clusterDetail)) {
-            HttpRestResult httpResult = request(this.base.toString() + "/nacos/v2/ns/service/" + serviceName,
+    public HttpRestResult createService(String namespace, String serviceName, String metadata) {
+        try {
+            HttpRestResult httpResult = request(this.base.toString() + "/nacos/v2/ns/service/" + serviceName ,
                 Collections.<String>emptyList(),
                 ParamsUtils.newParams()
-                    .appendParam("namespaceId", namespace)
                     .appendParam("serviceName", serviceName)
-                    .done(), StringUtils.EMPTY, "UTF-8", String.valueOf(HttpMethod.GET));
-            return  httpResult;
-        } else {
-            HttpRestResult httpResult = request(this.base.toString() + "/nacos/v2/ns/service/" + serviceName,
-                Collections.<String>emptyList(),
-                ParamsUtils.newParams()
                     .appendParam("namespaceId", namespace)
-                    .appendParam("serviceName", serviceName)
-                    .appendParam("clusterDetail", clusterDetail)
-                    .done(), StringUtils.EMPTY, "UTF-8", String.valueOf(HttpMethod.GET));
+                    .appendParam("metadata", metadata)
+                    .appendParam("groupName", Constants.DEFAULT_GROUP)
+                    .done(), StringUtils.EMPTY, "UTF-8",
+                String.valueOf(HttpMethod.POST));
             return  httpResult;
+        } catch (Exception e) {
+            log.error("createService Exception", e);
         }
+        return null;
+    }
+
+    public HttpRestResult modifyService(String namespace, String serviceName, String metadata) {
+        try {
+            HttpRestResult httpResult = request(this.base.toString() + "/nacos/v2/ns/service/" + serviceName,
+                Collections.<String>emptyList(),
+                ParamsUtils.newParams()
+                    .appendParam("serviceName", serviceName)
+                    .appendParam("metadata", metadata)
+                    .appendParam("namespaceId", namespace)
+                    .appendParam("groupName", Constants.DEFAULT_GROUP)
+                    .done(), StringUtils.EMPTY, "UTF-8", String.valueOf(HttpMethod.PUT));
+            return  httpResult;
+        } catch (Exception e) {
+            log.error("modifyService Exception", e);
+        }
+        return null;
+    }
+
+    public HttpRestResult listService(String namespace) {
+        try {
+            HttpRestResult httpResult = request(this.base.toString() + "/nacos/v2/ns/service/list",
+                Collections.<String>emptyList(),
+                ParamsUtils.newParams()
+                    .appendParam("namespaceId", namespace)
+                    .appendParam("pageNo", "1")
+                    .appendParam("pageSize", "100000")
+                    .appendParam("selector", "{\"type\":\"none\",\"contextType\":\"NONE\"}")
+                    .done(), StringUtils.EMPTY, "UTF-8", String.valueOf(HttpMethod.GET));
+            return  httpResult;
+        } catch (Exception e) {
+            log.error("modifyService Exception", e);
+        }
+        return null;
+    }
+
+    public HttpRestResult getService(String namespace, String serviceName, String clusterDetail) {
+        try {
+            Map<String, String> params = new HashMap<String, String>();
+            if (StringUtils.isBlank(clusterDetail)) {
+                HttpRestResult httpResult = request(this.base.toString() + "/nacos/v2/ns/service/" + serviceName,
+                    Collections.<String>emptyList(),
+                    ParamsUtils.newParams()
+                        .appendParam("namespaceId", namespace)
+                        .appendParam("serviceName", serviceName)
+                        .done(), StringUtils.EMPTY, "UTF-8", String.valueOf(HttpMethod.GET));
+                return  httpResult;
+            } else {
+                HttpRestResult httpResult = request(this.base.toString() + "/nacos/v2/ns/service/" + serviceName,
+                    Collections.<String>emptyList(),
+                    ParamsUtils.newParams()
+                        .appendParam("namespaceId", namespace)
+                        .appendParam("serviceName", serviceName)
+                        .appendParam("clusterDetail", clusterDetail)
+                        .done(), StringUtils.EMPTY, "UTF-8", String.valueOf(HttpMethod.GET));
+                return  httpResult;
+            }
+        } catch (Exception e) {
+            log.error("modifyService Exception", e);
+        }
+        return null;
     }
 
     public HttpRestResult deleteService(String namespace, String serviceName) throws Exception {
-        //删除service
-        HttpRestResult httpResult =
-            request(this.base.toString() + "/nacos/v2/ns/service/" + serviceName,
-                Collections.<String>emptyList(),
-                ParamsUtils.newParams()
-                    .appendParam("serviceName", serviceName)
-                    .appendParam("namespaceId", namespace)
-                    .appendParam("groupName", Constants.DEFAULT_GROUP)
-                    .done(), StringUtils.EMPTY, "UTF-8", String.valueOf(HttpMethod.DELETE));
-        return  httpResult;
+        try {
+            HttpRestResult httpResult =
+                request(this.base.toString() + "/nacos/v2/ns/service/" + serviceName,
+                    Collections.<String>emptyList(),
+                    ParamsUtils.newParams()
+                        .appendParam("serviceName", serviceName)
+                        .appendParam("namespaceId", namespace)
+                        .appendParam("groupName", Constants.DEFAULT_GROUP)
+                        .done(), StringUtils.EMPTY, "UTF-8", String.valueOf(HttpMethod.DELETE));
+            return  httpResult;
+        } catch (Exception e) {
+            log.error("modifyService Exception", e);
+        }
+        return null;
     }
 
     public HttpRestResult updateCluster(String namespace, String serviceName,
-        String checkPort,
-        String useInstancePort4Check, String healthChecker) throws Exception{
-        //更新健康检查
-        HttpRestResult httpResult =
-            request(this.base.toString() + "/nacos/v2/ns/cluster",
-                Collections.<String>emptyList(),
-                ParamsUtils.newParams()
-                    .appendParam("namespaceId", namespace)
-                    .appendParam("serviceName", serviceName)
-                    .appendParam("checkPort", checkPort)
-                    .appendParam("useInstancePort4Check", useInstancePort4Check)
-                    .appendParam("healthChecker", healthChecker)
-                    .appendParam("groupName", Constants.DEFAULT_GROUP)
-                    .appendParam("clusterName", Constants.DEFAULT_CLUSTER_NAME)
-                    .done(), StringUtils.EMPTY, "UTF-8", String.valueOf(HttpMethod.PUT));
-        return  httpResult;
+        String checkPort, String useInstancePort4Check, String healthChecker) {
+        try {
+            HttpRestResult httpResult =
+                request(this.base.toString() + "/nacos/v2/ns/cluster",
+                    Collections.<String>emptyList(),
+                    ParamsUtils.newParams()
+                        .appendParam("namespaceId", namespace)
+                        .appendParam("serviceName", serviceName)
+                        .appendParam("checkPort", checkPort)
+                        .appendParam("useInstancePort4Check", useInstancePort4Check)
+                        .appendParam("healthChecker", healthChecker)
+                        .appendParam("groupName", Constants.DEFAULT_GROUP)
+                        .appendParam("clusterName", Constants.DEFAULT_CLUSTER_NAME)
+                        .done(), StringUtils.EMPTY, "UTF-8", String.valueOf(HttpMethod.PUT));
+            return  httpResult;
+        } catch (Exception e) {
+            log.error("modifyService Exception", e);
+        }
+        return null;
     }
 
-    public HttpRestResult getInstanceList(String namespace, String serviceName) throws Exception{
-        //更新健康检查
-        HttpRestResult httpResult =
-            request(this.base.toString() + "/nacos/v2/ns/instance/list",
-                Collections.<String>emptyList(),
-                ParamsUtils.newParams()
-                    .appendParam("namespaceId", namespace)
-                    .appendParam("serviceName", serviceName)
-                    .appendParam("groupName", Constants.DEFAULT_GROUP)
-                    .appendParam("clusterName", Constants.DEFAULT_CLUSTER_NAME)
-                    .done(), StringUtils.EMPTY, "UTF-8", String.valueOf(HttpMethod.GET));
-        return  httpResult;
+    public HttpRestResult getInstanceList(String namespace, String serviceName) {
+        try {
+            HttpRestResult httpResult =
+                request(this.base.toString() + "/nacos/v2/ns/instance/list",
+                    Collections.<String>emptyList(),
+                    ParamsUtils.newParams()
+                        .appendParam("namespaceId", namespace)
+                        .appendParam("serviceName", serviceName)
+                        .appendParam("groupName", Constants.DEFAULT_GROUP)
+                        .appendParam("clusterName", Constants.DEFAULT_CLUSTER_NAME)
+                        .done(), StringUtils.EMPTY, "UTF-8", String.valueOf(HttpMethod.GET));
+            return  httpResult;
+        } catch (Exception e) {
+            log.error("modifyService Exception", e);
+        }
+        return null;
     }
 
     public HttpRestResult getInstanceDetail(String namespace, String serviceName,
-        String ip, String port) throws Exception{
-        //更新健康检查
-        HttpRestResult httpResult =
-            request(this.base.toString() + "/nacos/v2/ns/instance\n" + "\n",
-                Collections.<String>emptyList(),
-                ParamsUtils.newParams()
-                    .appendParam("namespaceId", namespace)
-                    .appendParam("serviceName", serviceName)
-                    .appendParam("ip", ip)
-                    .appendParam("port", port)
-                    .appendParam("groupName", Constants.DEFAULT_GROUP)
-                    .appendParam("clusterName", Constants.DEFAULT_CLUSTER_NAME)
-                    .done(), StringUtils.EMPTY, "UTF-8", String.valueOf(HttpMethod.GET));
-        return  httpResult;
+        String ip, String port) {
+        try {
+            HttpRestResult httpResult =
+                request(this.base.toString() + "/nacos/v2/ns/instance\n" + "\n",
+                    Collections.<String>emptyList(),
+                    ParamsUtils.newParams()
+                        .appendParam("namespaceId", namespace)
+                        .appendParam("serviceName", serviceName)
+                        .appendParam("ip", ip)
+                        .appendParam("port", port)
+                        .appendParam("groupName", Constants.DEFAULT_GROUP)
+                        .appendParam("clusterName", Constants.DEFAULT_CLUSTER_NAME)
+                        .done(), StringUtils.EMPTY, "UTF-8", String.valueOf(HttpMethod.GET));
+            return  httpResult;
+        } catch (Exception e) {
+            log.error("modifyService Exception", e);
+        }
+        return null;
     }
 }
