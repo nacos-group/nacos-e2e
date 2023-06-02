@@ -83,7 +83,8 @@ public class ResourceInit {
         if (StringUtils.isNotBlank(serverList)) {
             String[] servers = serverList.split(",");
             //make namespace/namespace1/namespace2 be existed
-            makeNsExist(servers[0]);
+            String server0 = servers[0].endsWith(":8848") ? servers[0] : servers[0]+":8848";
+            makeNsExist(server0);
             String tempServerList = "";
             if ("serverAddr".equals(mode)) {
                 for (String server : servers) {

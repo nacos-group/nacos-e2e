@@ -54,7 +54,7 @@ public class HealthCheckAPITest extends NamingBase {
         // 1. create service where metadata have enable_auto_clean=false
         HttpRestResult createResult = createService(namespace, serviceName, "{\"appName\":\"test"
             + "-app\",\"enable_auto_clean\":\"true\"}");
-        log.info("serviceName:" + serviceName + ", createResult:" + createResult.getData().toString());
+        log.info("serviceName:" + serviceName + ", createResult:" + JSON.toJSONString(createResult));
         Assertions.assertEquals(HttpURLConnection.HTTP_OK, createResult.getCode());
         cleanServiceNames.add(serviceName);
 
@@ -63,7 +63,7 @@ public class HealthCheckAPITest extends NamingBase {
         TimeUnit.SECONDS.sleep(TIME_OUT*24);
         HttpRestResult listResult = listService(namespace);
         Assertions.assertEquals(HttpURLConnection.HTTP_OK, listResult.getCode());
-        log.info("serviceName:" + serviceName + ", listResult:" + listResult.getData().toString());
+        log.info("serviceName:" + serviceName + ", listResult:" + JSON.toJSONString(listResult));
         Assertions.assertFalse(listResult.getData().toString().contains(serviceName));
     }
 
@@ -75,7 +75,7 @@ public class HealthCheckAPITest extends NamingBase {
         // 1. create service where metadata have enable_auto_clean=false
         HttpRestResult createResult = createService(namespace, serviceName, "{\"appName\":\"test"
             + "-app\",\"enable_auto_clean\":\"false\"}");
-        log.info("serviceName:" + serviceName + ", createResult:" + createResult.getData().toString());
+        log.info("serviceName:" + serviceName + ", createResult:" + JSON.toJSONString(createResult));
         Assertions.assertEquals(HttpURLConnection.HTTP_OK, createResult.getCode());
         cleanServiceNames.add(serviceName);
 
@@ -84,21 +84,21 @@ public class HealthCheckAPITest extends NamingBase {
         TimeUnit.SECONDS.sleep(TIME_OUT*24);
         HttpRestResult listResult = listService(namespace);
         Assertions.assertEquals(HttpURLConnection.HTTP_OK, listResult.getCode());
-        log.info("serviceName:" + serviceName + ", listResult:" + listResult.getData().toString());
+        log.info("serviceName:" + serviceName + ", listResult:" + JSON.toJSONString(listResult));
         Assertions.assertTrue(listResult.getData().toString().contains(serviceName));
 
         //3. change service set metadata enable_auto_clean=true
         HttpRestResult modifyResult = modifyService(namespace, serviceName, "{\"appName\":\"test"
             + "-app\",\"enable_auto_clean\":\"true\"}");
         Assertions.assertEquals(HttpURLConnection.HTTP_OK, modifyResult.getCode());
-        log.info("serviceName:" + serviceName + ", modifyResult:" + modifyResult.getData().toString());
+        log.info("serviceName:" + serviceName + ", modifyResult:" + JSON.toJSONString(modifyResult));
 
         // 4. wait for 120s, check null service will be clean
         log.info("sleep 120s");
         TimeUnit.SECONDS.sleep(TIME_OUT*24);
         listResult = listService(namespace);
         Assertions.assertEquals(HttpURLConnection.HTTP_OK, listResult.getCode());
-        log.info("serviceName:" + serviceName + ", listResult:" + listResult.getData().toString());
+        log.info("serviceName:" + serviceName + ", listResult:" + JSON.toJSONString(listResult));
         Assertions.assertFalse(listResult.getData().toString().contains(serviceName));
     }
 
@@ -108,7 +108,7 @@ public class HealthCheckAPITest extends NamingBase {
     public void testEnableAutoClean_null() throws Exception {
         // 1. create service where metadata not have enable_auto_clean key
         HttpRestResult createResult = createService(namespace, serviceName, "");
-        log.info("serviceName:" + serviceName + ", createResult:" + createResult.getData().toString());
+        log.info("serviceName:" + serviceName + ", createResult:" + JSON.toJSONString(createResult));
         Assertions.assertEquals(HttpURLConnection.HTTP_OK, createResult.getCode());
         cleanServiceNames.add(serviceName);
 
@@ -117,7 +117,7 @@ public class HealthCheckAPITest extends NamingBase {
         TimeUnit.SECONDS.sleep(TIME_OUT*24);
         HttpRestResult listResult = listService(namespace);
         Assertions.assertEquals(HttpURLConnection.HTTP_OK, listResult.getCode());
-        log.info("serviceName:" + serviceName + ", listResult:" + listResult.getData().toString());
+        log.info("serviceName:" + serviceName + ", listResult:" + JSON.toJSONString(listResult));
         Assertions.assertFalse(listResult.getData().toString().contains(serviceName));
     }
 
@@ -127,7 +127,7 @@ public class HealthCheckAPITest extends NamingBase {
         // 1. create service where metadata have enable_auto_clean=false
         HttpRestResult createResult = createService(namespace, serviceName, "{\"appName\":\"test"
             + "-app\",\"enable_auto_clean\":\"false\"}");
-        log.info("serviceName:" + serviceName + ", createResult:" + createResult.getData().toString());
+        log.info("serviceName:" + serviceName + ", createResult:" + JSON.toJSONString(createResult));
         Assertions.assertEquals(HttpURLConnection.HTTP_OK, createResult.getCode());
         cleanServiceNames.add(serviceName);
         TimeUnit.SECONDS.sleep(3);
@@ -138,13 +138,13 @@ public class HealthCheckAPITest extends NamingBase {
             + "\"healthyCheckThreshold\":4,\"type\":\"HTTP\"}";
         HttpRestResult updateResult = updateCluster(namespace, serviceName, "8080", "true", healthChecker);
         Assertions.assertEquals(HttpURLConnection.HTTP_OK, updateResult.getCode());
-        log.info("serviceName:" + serviceName + ", updateResult:" + updateResult.getData().toString());
+        log.info("serviceName:" + serviceName + ", updateResult:" + JSON.toJSONString(updateResult));
         TimeUnit.SECONDS.sleep(TIME_OUT*2);
 
         //3. get service detail is true
         HttpRestResult getResult = getService(namespace, serviceName, "true");
         Assertions.assertEquals(HttpURLConnection.HTTP_OK, getResult.getCode());
-        log.info("serviceName:" + serviceName + ", getResult:" + getResult.getData().toString());
+        log.info("serviceName:" + serviceName + ", getResult:" + JSON.toJSONString(getResult));
         JSONObject json = JSON.parseObject(getResult.getData().toString());
         Assertions.assertNotEquals(JSON.parseObject("{}"), json.getJSONObject("data").getJSONObject(
             "clusterMap"));
@@ -157,14 +157,14 @@ public class HealthCheckAPITest extends NamingBase {
         //4. get service detail is false
         getResult = getService(namespace, serviceName, "false");
         Assertions.assertEquals(HttpURLConnection.HTTP_OK, getResult.getCode());
-        log.info("serviceName:" + serviceName + ", getResult:" + getResult.getData().toString());
+        log.info("serviceName:" + serviceName + ", getResult:" + JSON.toJSONString(getResult));
         json = JSON.parseObject(getResult.getData().toString());
         Assertions.assertEquals(JSON.parseObject("{}"), json.getJSONObject("data").getJSONObject("clusterMap"));
 
         //5. get service detail is null
         getResult = getService(namespace, serviceName, "");
         Assertions.assertEquals(HttpURLConnection.HTTP_OK, getResult.getCode());
-        log.info("getResult:" + getResult.getData().toString());
+        log.info("getResult:" + JSON.toJSONString(getResult));
         json = JSON.parseObject(getResult.getData().toString());
         Assertions.assertEquals(JSON.parseObject("{}"), json.getJSONObject("data").getJSONObject("clusterMap"));
     }
@@ -175,7 +175,7 @@ public class HealthCheckAPITest extends NamingBase {
         // 1. create service where metadata have enable_auto_clean=false
         HttpRestResult createResult = createService(namespace, serviceName, "{\"appName\":\"test"
             + "-app\",\"enable_auto_clean\":\"false\"}");
-        log.info("serviceName:" + serviceName + ", createResult:" + createResult.getData().toString());
+        log.info("serviceName:" + serviceName + ", createResult:" + JSON.toJSONString(createResult));
         Assertions.assertEquals(HttpURLConnection.HTTP_OK, createResult.getCode());
         cleanServiceNames.add(serviceName);
         TimeUnit.SECONDS.sleep(3);
@@ -185,13 +185,13 @@ public class HealthCheckAPITest extends NamingBase {
             + "\"healthyCheckThreshold\":10,\"unhealthyCheckThreshold\":10}";
         HttpRestResult updateResult = updateCluster(namespace, serviceName, "8080", "true", healthChecker);
         Assertions.assertEquals(HttpURLConnection.HTTP_OK, updateResult.getCode());
-        log.info("updateResult:" + updateResult.getData().toString());
+        log.info("updateResult:" + JSON.toJSONString(updateResult));
         TimeUnit.SECONDS.sleep(TIME_OUT*2);
 
         //3. get service detail is true
         HttpRestResult getResult = getService(namespace, serviceName, "true");
         Assertions.assertEquals(HttpURLConnection.HTTP_OK, getResult.getCode());
-        log.info("getResult:" + getResult.getData().toString());
+        log.info("getResult:" + JSON.toJSONString(getResult));
         JSONObject json = JSON.parseObject(getResult.getData().toString());
         Assertions.assertNotEquals(JSON.parseObject("{}"), json.getJSONObject("data").getJSONObject(
             "clusterMap"));
@@ -204,14 +204,14 @@ public class HealthCheckAPITest extends NamingBase {
         //4. get service detail is false
         getResult = getService(namespace, serviceName, "false");
         Assertions.assertEquals(HttpURLConnection.HTTP_OK, getResult.getCode());
-        log.info("getResult:" + getResult.getData().toString());
+        log.info("getResult:" + JSON.toJSONString(getResult));
         json = JSON.parseObject(getResult.getData().toString());
         Assertions.assertEquals(JSON.parseObject("{}"), json.getJSONObject("data").getJSONObject("clusterMap"));
 
         //5. get service detail is null
         getResult = getService(namespace, serviceName, "");
         Assertions.assertEquals(HttpURLConnection.HTTP_OK, getResult.getCode());
-        log.info("getResult:" + getResult.getData().toString());
+        log.info("getResult:" + JSON.toJSONString(getResult));
         json = JSON.parseObject(getResult.getData().toString());
         Assertions.assertEquals(JSON.parseObject("{}"), json.getJSONObject("data").getJSONObject("clusterMap"));
     }
