@@ -52,7 +52,8 @@ public class NamingBase extends BaseOperate {
         try {
             naming = NacosFactory.createNamingService(properties);
             String[] serverArr = serverList.split(",");
-            String url = String.format("http://%s", serverArr[0]);
+            String server0 = serverArr[0].endsWith(":8848") ? serverArr[0] : serverArr[0]+":8848";
+            String url = String.format("http://%s", server0);
             base = new URL(url);
         } catch (Exception e) {
             log.error("NamingBase init NamingService Exception", e);
