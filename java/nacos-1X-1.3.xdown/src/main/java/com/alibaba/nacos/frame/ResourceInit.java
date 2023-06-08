@@ -22,7 +22,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
 
 import static com.alibaba.nacos.client.naming.net.HttpClient.request;
@@ -38,6 +40,8 @@ public class ResourceInit {
      */
     private static Properties properties = null;
     protected static String serverList = null;
+    protected static String allIp = null;
+    protected static List<String> serverIpList = new ArrayList<>();
     protected static String mode = null;
     protected static String namespace = null;
     protected static String namespace1 = null;
@@ -56,8 +60,8 @@ public class ResourceInit {
 
     private static void initResource() {
         try {
-            String env = System.getenv("env") == null ? "daily" : System.getenv("env");
-            String region = System.getenv("region") == null ? "daily" : System.getenv("region");
+            String env = System.getProperty("env", "daily");
+            String region = System.getProperty("region", "daily");
             InputStream inputStream = new FileInputStream(String.format("src/test/resources/env/%s/%s.conf", env, region));
             log.info("INIT - use config env:{}, config:{}", env, region);
             properties = configFileHelper.loadConfig(inputStream);
@@ -74,6 +78,66 @@ public class ResourceInit {
     }
 
     private static void initConnectionInfo() {
+        // pod_name:pod_ip,pod_name1:pod_ip1
+        allIp = System.getenv("ALL_IP");
+        mode = System.getenv("mode") == null ?
+            System.getProperty("mode", properties.getProperty("mode", "serverAddr")):
+            System.getenv("mode");
+        if (allIp != null) {
+            String[] allPodInfos = allIp.split(",");
+            for (String podInfo : allPodInfos) {
+                serverIpList.add(podInfo.substring(podInfo.indexOf(":") + 1));
+            }
+            if (serverIpList.isEmpty()) {
+                log.warn("INIT- Get serverList from external is empty");
+                serverList = System.getProperty("serverList", properties.getProperty("serverList"));
+            } else {
+                String tempServerList = "";
+                if ("serverAddr".equals(mode)) {
+                    for (String server : serverIpList) {
+                        if (!server.contains(":8848")) {
+                            tempServerList += server + ":8848" + ",";
+                        } else {
+                            tempServerList += server + ",";
+                        }
+                    }
+                } else {
+                    for (String server : serverIpList) {
+                        if (server.contains(":8848")) {
+                            tempServerList += server.split(":")[0] + ",";
+                        } else {
+                            tempServerList += server + ",";
+                        }
+                    }
+                }
+                serverList = tempServerList.endsWith(",") ? tempServerList.substring(0,
+                    tempServerList.length()-1) : tempServerList;
+            }
+        } else {
+            log.info("INIT- Get ALL_IP is null, use local info");
+            serverList = System.getProperty("serverList", properties.getProperty("serverList"));
+        }
+        if (serverList == null) {
+            log.error("INIT- Get serverList is null");
+            System.exit(-1);
+        }
+        namespace = System.getenv("namespace") == null ?
+            System.getProperty("namespace", properties.getProperty("namespace", "")) :
+            System.getenv("namespace");
+        namespace1 = System.getenv("namespace1") == null ?
+            System.getProperty("namespace1", properties.getProperty("namespace1", "test1")) :
+            System.getenv("namespace1");
+        namespace2 = System.getenv("namespace2") == null ?
+            System.getProperty("namespace2", properties.getProperty("namespace2", "test2")) :
+            System.getenv("namespace2");
+        //make namespace/namespace1/namespace2 be existed
+        String[] servers = serverList.split(",");
+        String server0 = servers[0].endsWith(":8848") ? servers[0] : servers[0]+":8848";
+        makeNsExist(server0);
+        log.info("INIT- serverList:{}, mode:{}, namespace:{}", serverList, mode, namespace);
+    }
+
+    private static void initConnectionInfo_old() {
         serverList = System.getenv("serverList") == null ? properties.getProperty("serverList") : System.getenv("serverList");
         mode = System.getenv("mode") == null ? properties.getProperty("mode") : System.getenv("mode");
         namespace = System.getenv("namespace") == null ? properties.getProperty("namespace") : System.getenv("namespace");
@@ -113,13 +177,19 @@ public class ResourceInit {
 
     private static void initAcl() {
         aclEnable = Boolean.parseBoolean(System.getenv("aclEnable") == null ?
-            properties.getProperty("aclEnable", "false") : System.getenv("aclEnable"));
+            System.getProperty("aclEnable", properties.getProperty("aclEnable", "false")) :
+            System.getenv("aclEnable"));
         tlsEnable = Boolean.parseBoolean(System.getenv("tlsEnable") == null ?
-            properties.getProperty("tlsEnable", "false") : System.getenv("tlsEnable"));
+            System.getProperty("tlsEnable", properties.getProperty("tlsEnable", "false")) :
+            System.getenv("tlsEnable"));
         if (aclEnable) {
             log.info("INIT - acl is enabled");
-            accessKey = System.getenv("ACCESS_KEY") == null ? properties.getProperty("ACCESS_KEY") : System.getenv("ACCESS_KEY");
-            secretKey = System.getenv("SECRET_KEY") == null ? properties.getProperty("SECRET_KEY") : System.getenv("SECRET_KEY");
+            accessKey = System.getenv("ACCESS_KEY") == null ?
+                System.getProperty("ACCESS_KEY", properties.getProperty("ACCESS_KEY")):
+                System.getenv("ACCESS_KEY");
+            secretKey = System.getenv("SECRET_KEY") == null ?
+                System.getProperty("SECRET_KEY", properties.getProperty("SECRET_KEY")) :
+                System.getenv("SECRET_KEY");
         } else {
             log.info("INIT - acl is disabled");
         }

@@ -24,10 +24,13 @@ public class ConfigDirectAddrTest extends ConfigBase {
     private String group;
     private String content;
     
-    static Boolean useEndpoint = Boolean.parseBoolean(System.getenv("nacos.use.endpoint.parsing"
-        + ".rule") == null ? "false" : System.getenv("nacos.use.endpoint.parsing.rule"));
-    static String  endpointUrl = System.getenv("ALIBABA_ALIWARE_ENDPOINT_URL");
-    static String directAddr = System.getenv("directAddr");
+    static Boolean useEndpoint = Boolean.parseBoolean(System.getenv("nacos.use.endpoint.parsing.rule") == null ?
+        System.getProperty("nacos.use.endpoint.parsing.rule","false") :
+        System.getenv("nacos.use.endpoint.parsing.rule"));
+    static String  endpointUrl = System.getenv("ALIBABA_ALIWARE_ENDPOINT_URL") == null ?
+        System.getProperty("ALIBABA_ALIWARE_ENDPOINT_URL") : System.getenv("ALIBABA_ALIWARE_ENDPOINT_URL");
+    static String directAddr = System.getenv("directAddr") == null ?
+        System.getProperty("directAddr") : System.getenv("directAddr");
     private static ConfigService config;
     private static ConfigService configDirect;
     private static ConfigService configEndpoint;
