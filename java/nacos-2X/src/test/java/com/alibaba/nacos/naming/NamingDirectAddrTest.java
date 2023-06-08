@@ -24,10 +24,13 @@ import java.util.concurrent.TimeUnit;
 public class NamingDirectAddrTest extends NamingBase{
     private static final Logger log = LoggerFactory.getLogger(NamingDirectAddrTest.class);
 
-    static Boolean useEndpoint = Boolean.parseBoolean(System.getenv("nacos.use.endpoint.parsing"
-        + ".rule") == null ? "false" : System.getenv("nacos.use.endpoint.parsing.rule"));
-    static String  endpointUrl = System.getenv("ALIBABA_ALIWARE_ENDPOINT_URL");
-    static String directAddr = System.getenv("directAddr");
+    static Boolean useEndpoint = Boolean.parseBoolean(System.getenv("nacos.use.endpoint.parsing.rule") == null ?
+        System.getProperty("nacos.use.endpoint.parsing.rule","false") :
+        System.getenv("nacos.use.endpoint.parsing.rule"));
+    static String  endpointUrl = System.getenv("ALIBABA_ALIWARE_ENDPOINT_URL") == null ?
+        System.getProperty("ALIBABA_ALIWARE_ENDPOINT_URL") : System.getenv("ALIBABA_ALIWARE_ENDPOINT_URL");
+    static String directAddr = System.getenv("directAddr") == null ?
+        System.getProperty("directAddr") : System.getenv("directAddr");
     private String serviceName;
     private static NamingService naming;
     private static NamingService namingDirect;
