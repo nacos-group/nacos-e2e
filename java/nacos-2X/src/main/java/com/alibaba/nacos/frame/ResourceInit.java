@@ -73,6 +73,7 @@ public class ResourceInit {
 
         initConnectionInfo();
         initAcl();
+        makeNsExist();
         getNacosClientVersion();
         getNacosServerVersion();
     }
@@ -86,11 +87,15 @@ public class ResourceInit {
         if (allIp != null) {
             String[] allPodInfos = allIp.split(",");
             for (String podInfo : allPodInfos) {
-                serverIpList.add(podInfo.substring(podInfo.indexOf(":") + 1));
+                if (podInfo.startsWith("nacos-")) {
+                    serverIpList.add(podInfo.substring(podInfo.indexOf(":") + 1));
+                }
             }
             if (serverIpList.isEmpty()) {
                 log.warn("INIT- Get serverList from external is empty");
-                serverList = System.getProperty("serverList", properties.getProperty("serverList"));
+                serverList = System.getenv("serverList") == null ?
+                    System.getProperty("serverList", properties.getProperty("serverList")) :
+                    System.getenv("serverList");
             } else {
                 String tempServerList = "";
                 if ("serverAddr".equals(mode)) {
@@ -115,7 +120,9 @@ public class ResourceInit {
             }
         } else {
             log.info("INIT- Get ALL_IP is null, use local info");
-            serverList = System.getProperty("serverList", properties.getProperty("serverList"));
+            serverList = System.getenv("serverList") == null ?
+                System.getProperty("serverList", properties.getProperty("serverList")) :
+                System.getenv("serverList");
         }
         if (serverList == null) {
             log.error("INIT- Get serverList is null");
@@ -130,50 +137,8 @@ public class ResourceInit {
         namespace2 = System.getenv("namespace2") == null ?
             System.getProperty("namespace2", properties.getProperty("namespace2", "test2")) :
             System.getenv("namespace2");
-        //make namespace/namespace1/namespace2 be existed
-        String[] servers = serverList.split(",");
-        String server0 = servers[0].endsWith(":8848") ? servers[0] : servers[0]+":8848";
-        makeNsExist(server0);
-        log.info("INIT- serverList:{}, mode:{}, namespace:{}", serverList, mode, namespace);
-    }
-
-    private static void initConnectionInfo_old() {
-        serverList = System.getenv("serverList") == null ? properties.getProperty("serverList") : System.getenv("serverList");
-        mode = System.getenv("mode") == null ? properties.getProperty("mode") : System.getenv("mode");
-        namespace = System.getenv("namespace") == null ? properties.getProperty("namespace") : System.getenv("namespace");
-        namespace1 = System.getenv("namespace1") == null ? properties.getProperty("namespace1") : System.getenv("namespace1");
-        namespace2 = System.getenv("namespace2") == null ? properties.getProperty("namespace2") : System.getenv("namespace2");
-
-        // use mode join right serverList
-        if (StringUtils.isNotBlank(serverList)) {
-            String[] servers = serverList.split(",");
-            //make namespace/namespace1/namespace2 be existed
-            String server0 = servers[0].endsWith(":8848") ? servers[0] : servers[0]+":8848";
-            makeNsExist(server0);
-            String tempServerList = "";
-            if ("serverAddr".equals(mode)) {
-                for (String server : servers) {
-                    if (!server.contains(":8848")) {
-                        tempServerList += server + ":8848" + ",";
-                    } else {
-                        tempServerList += server + ",";
-                    }
-                }
-            } else {
-                for (String server : servers) {
-                    if (serverList.contains(":8848")) {
-                        tempServerList += server.split(":")[0] + ",";
-                    } else {
-                        tempServerList += server + ",";
-                    }
-                }
-            }
-            serverList = tempServerList.endsWith(",") ? tempServerList.substring(0,
-                tempServerList.length()-1) : tempServerList;
-        } else {
-            log.info("INIT- Get serverList is null");
-        }
-        log.info("INIT- serverList:{}, mode:{}, namespace:{}", serverList, mode, namespace);
+        log.info("INIT- serverList:{}, mode:{}, namespace:{}, namespace1:{}, namespace2:{}",
+            serverList, mode, namespace, namespace1, namespace2);
     }
 
     private static void initAcl() {
@@ -286,7 +251,10 @@ public class ResourceInit {
         return isConnected;
     }
 
-    private static void makeNsExist(String server0) {
+    private static void makeNsExist() {
+        //make namespace/namespace1/namespace2 be existed
+        String[] servers = serverList.split(",");
+        String server0 = servers[0].endsWith(":8848") ? servers[0] : servers[0]+":8848";
         try {
             Boolean haveNs = false;
             Boolean haveNs1 = false;
