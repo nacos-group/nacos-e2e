@@ -178,36 +178,35 @@ public class RegisterInstanceTest extends NamingBase{
     @DisplayName("Register instance with underline cluster Name.")
     public void testRegServiceWithUnderlineClusterName() throws Exception{
         Instance instance = NamingBase.getInstance(serviceName);
-
-        // server 1.x and up 2.1.1 will not accept clusterName with underline
-        // client up 2.1.1 will not accept clusterName with underline
-        if (StringUtils.isNotBlank(nacosServerVersion) && StringUtils.isNotBlank(nacosClientVersion) ) {
+        //clusterName with underline is been hotfix in all serverVersion，
+        //but 2.1.0 < client <= 2.2.4 will not accept
+        log.info("check nacosClientVersion:{}, nacosServerVersion:{}", nacosClientVersion, nacosServerVersion);
+        String clusterName = "checkClusterName_underline";
+        instance.setClusterName(clusterName);
+        if (StringUtils.isNotBlank(nacosClientVersion) ) {
             nacosClientVersion = nacosClientVersion.replaceAll("\\.", "").split("-")[0];
-            nacosServerVersion = nacosServerVersion.replaceAll("\\.", "");
-            String clusterName = "checkClusterName_underline";
-            instance.setClusterName(clusterName);
-            if (Integer.parseInt(nacosClientVersion) < 211) {
-                if (Integer.parseInt(nacosServerVersion) < 211 && !nacosServerVersion.startsWith("1")) {
-
-                    naming.registerInstance(serviceName, instance);
-                    TimeUnit.SECONDS.sleep(5);
-
-                    List<Instance> instances = naming.getAllInstances(serviceName,false);
-
-                    Assertions.assertEquals(1, instances.size());
-                    Assertions.assertEquals(clusterName, instances.get(0).getClusterName());
-                } else {
-                    Throwable exception = Assertions.assertThrows(NacosException.class, () -> {
-                        naming.registerInstance(serviceName, instance);
-                    });
-                    log.info("checkClusterName_underline " + exception.getMessage());
-                }
-            } else {
+            if (Integer.parseInt(nacosClientVersion) > 210 && Integer.parseInt(nacosClientVersion) <= 224) {
                 Throwable exception = Assertions.assertThrows(NacosException.class, () -> {
                     naming.registerInstance(serviceName, instance);
                 });
                 log.info("checkClusterName_underline " + exception.getMessage());
+            } else {
+                naming.registerInstance(serviceName, instance);
+                TimeUnit.SECONDS.sleep(5);
+
+                List<Instance> instances = naming.getAllInstances(serviceName, false);
+
+                Assertions.assertEquals(1, instances.size());
+                Assertions.assertEquals(clusterName, instances.get(0).getClusterName());
             }
+        } else {
+            naming.registerInstance(serviceName, instance);
+            TimeUnit.SECONDS.sleep(5);
+
+            List<Instance> instances = naming.getAllInstances(serviceName, false);
+
+            Assertions.assertEquals(1, instances.size());
+            Assertions.assertEquals(clusterName, instances.get(0).getClusterName());
         }
     }
 }

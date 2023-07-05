@@ -163,7 +163,7 @@ public class ResourceInit {
 
     private static void getNacosClientVersion() {
         String key = "nacos.client.version";
-        nacosClientVersion = System.getenv(key);
+        nacosClientVersion = System.getenv(key) == null ? System.getProperty(key) : System.getenv(key);
         if (StringUtils.isBlank(nacosClientVersion)) {
             nacosClientVersion = getPomProperties(key, "pom.xml");
         }
