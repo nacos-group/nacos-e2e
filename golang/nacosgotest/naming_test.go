@@ -1,170 +1,818 @@
 package nacos_go_test
 
 import (
-	"github.com/nacos-group/nacos-sdk-go/v2/clients"
-	"github.com/nacos-group/nacos-sdk-go/v2/clients/nacos_client"
-	"github.com/nacos-group/nacos-sdk-go/v2/clients/naming_client"
-	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
-	"github.com/nacos-group/nacos-sdk-go/v2/common/http_agent"
+	"encoding/json"
+	"fmt"
+	"github.com/nacos-group/nacos-sdk-go/v2/model"
+	"github.com/nacos-group/nacos-sdk-go/v2/util"
 	"github.com/nacos-group/nacos-sdk-go/v2/vo"
 	"github.com/stretchr/testify/assert"
-	"os"
+	"log"
+	. "nacos_go_test/utils"
+	"strconv"
 	"testing"
 	"time"
-    "math/rand"
 )
 
-var clientConfigTest = *constant.NewClientConfig(
-	constant.WithTimeoutMs(10*1000),
-	constant.WithBeatInterval(5*1000),
-	constant.WithNotLoadCacheAtStart(true),
-)
+func Test_GetService_GetAllServicesInfo_ClusterName(t *testing.T) {
+	client := CreateNamingClient(false)
+	t.Run("TestWithoutClusterName", func(t *testing.T) {
+		var serviceName string = RandServiceName(10)
+		success, err := client.RegisterInstance(vo.RegisterInstanceParam{
+			ServiceName: serviceName,
+			Ip:          TEST_IP_1,
+			Port:        TEST_PORT_8848,
+			Ephemeral:   false,
+			GroupName:   DEFAULT_GROUP,
+		})
+		assert.Equal(t, nil, err)
+		assert.Equal(t, true, success)
 
+		time.Sleep(5 * time.Second)
 
-const strs = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-func rands(n int) string {
-    b := make([]byte, n)
-    for i := range b {
-      b[i] = strs[rand.Intn(len(strs))]
-    }
-    return string(b)
+		result, err := client.GetService(vo.GetServiceParam{
+			ServiceName: serviceName,
+			GroupName:   DEFAULT_GROUP,
+		})
+
+		assert.NotNil(t, result)
+		assert.Nil(t, err)
+		assert.Equal(t, serviceName, result.Name)
+
+		values, errs := client.GetAllServicesInfo(vo.GetAllServiceInfoParam{
+			NameSpace: Ns,
+			GroupName: DEFAULT_GROUP,
+			PageNo:    1,
+			PageSize:  20,
+		})
+
+		assert.NotNil(t, values.Doms)
+		assert.Nil(t, errs)
+		assert.True(t, Contains(values.Doms, serviceName))
+	})
+	t.Run("TestWithClusterName", func(t *testing.T) {
+		var serviceName string = RandServiceName(10)
+		var clusterName string = "test"
+		success, err := client.RegisterInstance(vo.RegisterInstanceParam{
+			ServiceName: serviceName,
+			Ip:          TEST_IP_1,
+			Port:        TEST_PORT_8848,
+			ClusterName: clusterName,
+			Ephemeral:   false,
+		})
+		assert.Equal(t, nil, err)
+		assert.Equal(t, true, success)
+
+		time.Sleep(5 * time.Second)
+
+		result, err := client.GetService(vo.GetServiceParam{
+			ServiceName: serviceName,
+			Clusters:    []string{clusterName},
+			GroupName:   DEFAULT_GROUP,
+		})
+
+		assert.NotNil(t, result)
+		assert.Nil(t, err)
+		assert.Equal(t, serviceName, result.Name)
+
+		result1, err1 := client.GetService(vo.GetServiceParam{
+			ServiceName: serviceName,
+			GroupName:   DEFAULT_GROUP,
+		})
+
+		assert.NotNil(t, result1)
+		assert.Nil(t, err1)
+		assert.Equal(t, serviceName, result1.Name)
+	})
 }
 
-var serverConfigTest = *constant.NewServerConfig("127.0.0.1", 8848, constant.WithContextPath("/nacos"))
+func Test_SelectInstances_SelectAllInstances(t *testing.T) {
+	client := CreateNamingClient(false)
+	t.Run("TestEphemeralTrue", func(t *testing.T) {
+		var serviceName string = RandServiceName(10)
+		success, err := client.RegisterInstance(vo.RegisterInstanceParam{
+			ServiceName: serviceName,
+			Ip:          TEST_IP_1,
+			Port:        TEST_PORT_8848,
+			Ephemeral:   true,
+			GroupName:   DEFAULT_GROUP,
+		})
+		assert.Equal(t, nil, err)
+		assert.Equal(t, true, success)
 
-func NewTestNamingClient() naming_client.INamingClient {
-	nc := nacos_client.NacosClient{}
-	sc := []constant.ServerConfig{
-		*constant.NewServerConfig(os.Getenv("serverList"), 8848, constant.WithContextPath("/nacos")),
+		time.Sleep(5 * time.Second)
+
+		results, err := client.SelectInstances(vo.SelectInstancesParam{
+			ServiceName: serviceName,
+			GroupName:   DEFAULT_GROUP,
+		})
+		assert.NotNil(t, results)
+		assert.Nil(t, err)
+		assert.True(t, len(results) > 0)
+		for i, r := range results {
+			fmt.Println("i:", i, ": "+ToJsonString(r))
+			assert.Equal(t, serviceName, r.ServiceName)
+			assert.Equal(t, TEST_IP_1, r.Ip)
+			assert.Equal(t, TEST_PORT_8848, r.Port)
+		}
+
+		values, errs := client.SelectAllInstances(vo.SelectAllInstancesParam{
+			ServiceName: serviceName,
+			GroupName:   DEFAULT_GROUP,
+		})
+		assert.NotNil(t, values)
+		assert.Nil(t, errs)
+		assert.True(t, len(values) > 0)
+		for i, v := range values {
+			fmt.Println("i:", i, ": "+ToJsonString(v))
+			assert.Equal(t, serviceName, v.ServiceName)
+			assert.Equal(t, TEST_IP_1, v.Ip)
+			assert.Equal(t, TEST_PORT_8848, v.Port)
+		}
+	})
+	t.Run("TestEphemeralFalse", func(t *testing.T) {
+		var serviceName string = RandServiceName(10)
+		success, err := client.RegisterInstance(vo.RegisterInstanceParam{
+			ServiceName: serviceName,
+			Ip:          TEST_IP_1,
+			Port:        TEST_PORT_8848,
+			Ephemeral:   false,
+			GroupName:   DEFAULT_GROUP,
+		})
+		assert.Equal(t, nil, err)
+		assert.Equal(t, true, success)
+
+		time.Sleep(5 * time.Second)
+
+		results, err := client.SelectInstances(vo.SelectInstancesParam{
+			ServiceName: serviceName,
+			GroupName:   DEFAULT_GROUP,
+		})
+		assert.NotNil(t, results)
+		assert.Nil(t, err)
+		assert.True(t, len(results) > 0)
+		for i, r := range results {
+			fmt.Println("i:", i, ": "+ToJsonString(r))
+			assert.Equal(t, serviceName, r.ServiceName)
+			assert.Equal(t, TEST_IP_1, r.Ip)
+			assert.Equal(t, TEST_PORT_8848, r.Port)
+		}
+
+		values, errs := client.SelectAllInstances(vo.SelectAllInstancesParam{
+			ServiceName: serviceName,
+			GroupName:   DEFAULT_GROUP,
+		})
+		assert.NotNil(t, values)
+		assert.Nil(t, errs)
+		assert.True(t, len(values) > 0)
+		for i, v := range values {
+			fmt.Println("i:", i, ": "+ToJsonString(v))
+			assert.Equal(t, serviceName, v.ServiceName)
+			assert.Equal(t, TEST_IP_1, v.Ip)
+			assert.Equal(t, TEST_PORT_8848, v.Port)
+		}
+	})
+}
+
+func Test_RegisterInstance_DeregisterInstance_GroupName(t *testing.T) {
+	client := CreateNamingClient(false)
+	t.Run("TestWithoutGroupNameAndEphemeralTrue", func(t *testing.T) {
+		var serviceName string = RandServiceName(10)
+		successR, errR := client.RegisterInstance(vo.RegisterInstanceParam{
+			ServiceName: serviceName,
+			Ip:          TEST_IP_1,
+			Port:        TEST_PORT_8848,
+			Ephemeral:   true,
+		})
+		assert.Equal(t, nil, errR)
+		assert.Equal(t, true, successR)
+
+		time.Sleep(5 * time.Second)
+
+		successD, errD := client.DeregisterInstance(vo.DeregisterInstanceParam{
+			ServiceName: serviceName,
+			Ip:          TEST_IP_1,
+			Port:        TEST_PORT_8848,
+			Ephemeral:   true,
+		})
+		assert.Equal(t, nil, errD)
+		assert.Equal(t, true, successD)
+	})
+
+	t.Run("TestWithGroupNameAndEphemeralFalse", func(t *testing.T) {
+		var serviceName string = RandServiceName(10)
+		successR, errR := client.RegisterInstance(vo.RegisterInstanceParam{
+			ServiceName: serviceName,
+			Ip:          TEST_IP_1,
+			Port:        TEST_PORT_8848,
+			GroupName:   "test_group",
+			Ephemeral:   false,
+		})
+		assert.Equal(t, nil, errR)
+		assert.Equal(t, true, successR)
+
+		time.Sleep(5 * time.Second)
+
+		successD, errD := client.DeregisterInstance(vo.DeregisterInstanceParam{
+			ServiceName: serviceName,
+			Ip:          TEST_IP_1,
+			Port:        TEST_PORT_8848,
+			GroupName:   "test_group",
+			Ephemeral:   false,
+		})
+		assert.Equal(t, nil, errD)
+		assert.Equal(t, true, successD)
+	})
+}
+
+func Test_RegisterInstance_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
+	t.Run("TestOpenProtect", func(t *testing.T) {
+		client := CreateNamingClient(false)
+		var serviceName string = RandServiceName(10)
+		success, err := client.RegisterInstance(vo.RegisterInstanceParam{
+			ServiceName: serviceName,
+			Ip:          TEST_IP_1,
+			Port:        TEST_PORT_8848,
+			Ephemeral:   true,
+			GroupName:   DEFAULT_GROUP,
+		})
+		assert.Equal(t, nil, err)
+		assert.Equal(t, true, success)
+
+		time.Sleep(5 * time.Second)
+
+		values, errs := client.SelectAllInstances(vo.SelectAllInstancesParam{
+			ServiceName: serviceName,
+			GroupName:   DEFAULT_GROUP,
+		})
+		assert.NotNil(t, values)
+		assert.Nil(t, errs)
+		assert.True(t, len(values) > 0)
+		for i, v := range values {
+			fmt.Println("i:", i, ": "+ToJsonString(v))
+			assert.Equal(t, serviceName, v.ServiceName)
+			assert.Equal(t, TEST_IP_1, v.Ip)
+			assert.Equal(t, TEST_PORT_8848, v.Port)
+		}
+
+		successD, errD := client.DeregisterInstance(vo.DeregisterInstanceParam{
+			ServiceName: serviceName,
+			Ip:          TEST_IP_1,
+			Port:        TEST_PORT_8848,
+		})
+		assert.Equal(t, nil, errD)
+		assert.Equal(t, true, successD)
+
+		timeout := 120
+		start := time.Now()
+		for {
+			values, errs = client.SelectAllInstances(vo.SelectAllInstancesParam{
+				ServiceName: serviceName,
+				GroupName:   DEFAULT_GROUP,
+			})
+			if len(values) == 0 {
+				fmt.Printf("Current SelectInstances is empty\n")
+				break
+			}
+			if time.Since(start).Seconds() > float64(timeout) {
+				fmt.Println("Timeout exceeded. Exiting loop.")
+				break
+			}
+			time.Sleep(5 * time.Second)
+		}
+		assert.True(t, len(values) != 0)
+	})
+
+	t.Run("TestCloseProtect", func(t *testing.T) {
+		client := CreateNamingClient(true)
+		var serviceName string = RandServiceName(10)
+		success, err := client.RegisterInstance(vo.RegisterInstanceParam{
+			ServiceName: serviceName,
+			Ip:          TEST_IP_1,
+			Port:        TEST_PORT_8848,
+			Ephemeral:   true,
+			GroupName:   DEFAULT_GROUP,
+		})
+		assert.Equal(t, nil, err)
+		assert.Equal(t, true, success)
+
+		time.Sleep(5 * time.Second)
+
+		values, errs := client.SelectAllInstances(vo.SelectAllInstancesParam{
+			ServiceName: serviceName,
+			GroupName:   DEFAULT_GROUP,
+		})
+		assert.NotNil(t, values)
+		assert.Nil(t, errs)
+		assert.True(t, len(values) > 0)
+		for i, v := range values {
+			fmt.Println("i:", i, ": "+ToJsonString(v))
+			assert.Equal(t, serviceName, v.ServiceName)
+			assert.Equal(t, TEST_IP_1, v.Ip)
+			assert.Equal(t, TEST_PORT_8848, v.Port)
+		}
+
+		successD, errD := client.DeregisterInstance(vo.DeregisterInstanceParam{
+			ServiceName: serviceName,
+			Ip:          TEST_IP_1,
+			Port:        TEST_PORT_8848,
+			Ephemeral:   false,
+		})
+		assert.Equal(t, nil, errD)
+		assert.Equal(t, true, successD)
+
+		timeout := 120
+		start := time.Now()
+		for {
+			values, errs = client.SelectAllInstances(vo.SelectAllInstancesParam{
+				ServiceName: serviceName,
+				GroupName:   DEFAULT_GROUP,
+			})
+			if len(values) == 0 {
+				fmt.Printf("Current SelectInstances is empty\n")
+				break
+			}
+			if time.Since(start).Seconds() > float64(timeout) {
+				fmt.Println("Timeout exceeded. Exiting loop.")
+				break
+			}
+			time.Sleep(5 * time.Second)
+		}
+		assert.NotNil(t, values)
+		assert.Nil(t, err)
+		assert.True(t, len(values) == 0)
+	})
+}
+
+func Test_RegisterInstance_EphemeralTrueAndFalse_AtTheSameTime(t *testing.T) {
+	client := CreateNamingClient(false)
+	var serviceName string = RandServiceName(10)
+
+	params := map[string]string{}
+	params["namespaceId"] = Ns
+	params["serviceName"] = util.GetGroupName(serviceName, DEFAULT_GROUP)
+	params["groupName"] = DEFAULT_GROUP
+	params["ip"] = TEST_IP_1
+	params["port"] = strconv.Itoa(int(TEST_PORT_8848))
+	params["weight"] = strconv.FormatFloat(1, 'f', -1, 64)
+	params["enable"] = strconv.FormatBool(true)
+	params["healthy"] = strconv.FormatBool(true)
+	metadata := map[string]string{"key": RandStr(100)}
+	params["metadata"] = util.ToJsonString(metadata)
+	params["ephemeral"] = strconv.FormatBool(false)
+
+	body := HttpPost("/nacos/v1/ns/instance", params)
+	assert.Equal(t, "ok", body)
+
+	time.Sleep(5 * time.Second)
+	success, err := client.RegisterInstance(vo.RegisterInstanceParam{
+		ServiceName: serviceName,
+		Ip:          TEST_IP_1,
+		Port:        TEST_PORT_8848,
+		Ephemeral:   true,
+		GroupName:   DEFAULT_GROUP,
+	})
+	assert.False(t, success)
+	assert.NotNil(t, err)
+
+	successD, errD := client.DeregisterInstance(vo.DeregisterInstanceParam{
+		ServiceName: serviceName,
+		Ip:          TEST_IP_1,
+		Port:        TEST_PORT_8848,
+		Ephemeral:   true,
+	})
+	assert.Equal(t, nil, errD)
+	assert.Equal(t, true, successD)
+
+	successD, errD = client.DeregisterInstance(vo.DeregisterInstanceParam{
+		ServiceName: serviceName,
+		Ip:          TEST_IP_1,
+		Port:        TEST_PORT_8848,
+		Ephemeral:   false,
+	})
+	assert.Equal(t, nil, errD)
+	assert.Equal(t, true, successD)
+}
+
+func Test_Subscribe(t *testing.T) {
+	var serviceName string = RandServiceName(10)
+	var listenService []model.Instance
+	client := CreateNamingClient(false)
+
+	subscribeParam := &vo.SubscribeParam{
+		ServiceName: serviceName,
+		GroupName:   DEFAULT_GROUP,
+		SubscribeCallback: func(services []model.Instance, err error) {
+			if err != nil {
+				log.Printf("subscribe error:%+v", err)
+				return
+			}
+			assert.Nil(t, err)
+			listenService = services
+			for _, service := range services {
+				log.Printf("subscribe service:%+v", service)
+			}
+			js, _ := json.Marshal(services)
+			fmt.Printf("\n\n callback return services:%s \n\n", string(js))
+		},
 	}
+	err := client.Subscribe(subscribeParam)
+	assert.Nil(t, err)
 
-	//create ClientConfig
-	cc := *constant.NewClientConfig(
-		constant.WithNamespaceId(""),
-		constant.WithTimeoutMs(5000),
-		constant.WithNotLoadCacheAtStart(true),
-		constant.WithLogDir("/tmp/nacos/log"),
-		constant.WithCacheDir("/tmp/nacos/cache"),
-		constant.WithLogLevel("debug"),
-	)
+	success, err := client.RegisterInstance(vo.RegisterInstanceParam{
+		ServiceName: serviceName,
+		Ip:          TEST_IP_1,
+		Port:        TEST_PORT_8848,
+		Ephemeral:   true,
+		GroupName:   DEFAULT_GROUP,
+	})
+	assert.Equal(t, nil, err)
+	assert.Equal(t, true, success)
 
-	var clientParam = vo.NacosClientParam{
-		ClientConfig:  &cc,
-		ServerConfigs: sc,
+	timeout := 60
+	start := time.Now()
+	for {
+		if len(listenService) != 0 {
+			js, _ := json.Marshal(listenService)
+			fmt.Printf("Current service: %s\n", string(js))
+			break
+		}
+		if time.Since(start).Seconds() > float64(timeout) {
+			fmt.Println("Timeout exceeded. Exiting loop.")
+			break
+		}
+		time.Sleep(5 * time.Second)
 	}
-	_ = nc.SetServerConfig([]constant.ServerConfig{serverConfigTest})
-	_ = nc.SetClientConfig(clientConfigTest)
-	_ = nc.SetHttpAgent(&http_agent.HttpAgent{})
-	client, err := clients.NewNamingClient(clientParam)
-	if err != nil {
-        panic("NewNamingClient failed!")
-    }
-	return client
+	assert.True(t, len(listenService) != 0)
 }
 
-func Test_RegisterServiceInstance__DeregisterService_withoutGroupName(t *testing.T) {
-    //create ServerConfig
-    var serviceName string = "DEMO" + rands(10)
-    successR, errR := NewTestNamingClient().RegisterInstance(vo.RegisterInstanceParam{
-        ServiceName: serviceName,
-        Ip:          "10.0.0.10",
-        Port:        80,
-        Ephemeral:   false,
-    })
-    assert.Equal(t, nil, errR)
-    assert.Equal(t, true, successR)
+func Test_Subscribe_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
+	t.Run("TestOpenProtect", func(t *testing.T) {
+		client := CreateNamingClient(false)
+		var serviceName string = RandServiceName(10)
+		var listenService []model.Instance
 
-    time.Sleep(5 * time.Second)
+		success, err := client.RegisterInstance(vo.RegisterInstanceParam{
+			ServiceName: serviceName,
+			Ip:          TEST_IP_1,
+			Port:        TEST_PORT_8848,
+			Ephemeral:   true,
+			GroupName:   DEFAULT_GROUP,
+		})
+		assert.Equal(t, nil, err)
+		assert.Equal(t, true, success)
 
-    successD, errD := NewTestNamingClient().DeregisterInstance(vo.DeregisterInstanceParam{
-        ServiceName: serviceName,
-        Ip:          "10.0.0.10",
-        Port:        80,
-        Ephemeral:   false,
-    })
-    assert.Equal(t, nil, errD)
-    assert.Equal(t, true, successD)
+		time.Sleep(5 * time.Second)
+
+		subscribeParam := &vo.SubscribeParam{
+			ServiceName: serviceName,
+			GroupName:   DEFAULT_GROUP,
+			SubscribeCallback: func(services []model.Instance, err error) {
+				if err != nil {
+					log.Printf("subscribe error:%+v", err)
+					return
+				}
+				assert.Nil(t, err)
+				listenService = services
+				for _, service := range services {
+					log.Printf("subscribe service:%+v", service)
+				}
+				js, _ := json.Marshal(services)
+				fmt.Printf("\n\n callback return services:%s \n\n", string(js))
+			},
+		}
+		errS := client.Subscribe(subscribeParam)
+		assert.Nil(t, errS)
+
+		// receive the register instance
+		timeout := 30
+		start := time.Now()
+		for {
+			if len(listenService) != 0 {
+				js, _ := json.Marshal(listenService)
+				fmt.Printf("Current service: %s\n", string(js))
+				break
+			}
+			if time.Since(start).Seconds() > float64(timeout) {
+				fmt.Println("Timeout exceeded. Exiting loop.")
+				break
+			}
+			time.Sleep(5 * time.Second)
+		}
+		assert.True(t, len(listenService) != 0)
+
+		successD, errD := client.DeregisterInstance(vo.DeregisterInstanceParam{
+			ServiceName: serviceName,
+			Ip:          TEST_IP_1,
+			Port:        TEST_PORT_8848,
+		})
+		assert.Equal(t, nil, errD)
+		assert.Equal(t, true, successD)
+
+		//expect not receive the deregister instance
+		timeout = 30
+		start = time.Now()
+		for {
+			if len(listenService) == 0 {
+				js, _ := json.Marshal(listenService)
+				fmt.Printf("Current service: %s\n", string(js))
+				break
+			}
+			if time.Since(start).Seconds() > float64(timeout) {
+				fmt.Println("Timeout exceeded. Exiting loop.")
+				break
+			}
+			time.Sleep(5 * time.Second)
+		}
+		assert.True(t, len(listenService) != 0)
+	})
+
+	t.Run("TestCloseProtect", func(t *testing.T) {
+		client := CreateNamingClient(true)
+		var serviceName string = RandServiceName(10)
+		var listenService []model.Instance
+
+		success, err := client.RegisterInstance(vo.RegisterInstanceParam{
+			ServiceName: serviceName,
+			Ip:          TEST_IP_1,
+			Port:        TEST_PORT_8848,
+			Ephemeral:   true,
+			GroupName:   DEFAULT_GROUP,
+		})
+		assert.Equal(t, nil, err)
+		assert.Equal(t, true, success)
+
+		time.Sleep(5 * time.Second)
+
+		subscribeParam := &vo.SubscribeParam{
+			ServiceName: serviceName,
+			GroupName:   DEFAULT_GROUP,
+			SubscribeCallback: func(services []model.Instance, err error) {
+				if err != nil {
+					log.Printf("subscribe error:%+v", err)
+					return
+				}
+				assert.Nil(t, err)
+				listenService = services
+				for _, service := range services {
+					log.Printf("subscribe service:%+v", service)
+				}
+				js, _ := json.Marshal(services)
+				fmt.Printf("\n\n callback return services:%s \n\n", string(js))
+			},
+		}
+		errS := client.Subscribe(subscribeParam)
+		assert.Nil(t, errS)
+
+		// receive the register instance
+		timeout := 30
+		start := time.Now()
+		for {
+			if len(listenService) != 0 {
+				js, _ := json.Marshal(listenService)
+				fmt.Printf("Current service: %s\n", string(js))
+				break
+			}
+			if time.Since(start).Seconds() > float64(timeout) {
+				fmt.Println("Timeout exceeded. Exiting loop.")
+				break
+			}
+			time.Sleep(5 * time.Second)
+		}
+		assert.True(t, len(listenService) != 0)
+
+		//reset and deregister
+		listenService = []model.Instance{}
+		successD, errD := client.DeregisterInstance(vo.DeregisterInstanceParam{
+			ServiceName: serviceName,
+			Ip:          TEST_IP_1,
+			Port:        TEST_PORT_8848,
+		})
+		assert.Equal(t, nil, errD)
+		assert.Equal(t, true, successD)
+
+		//expect receive the deregister instance
+		timeout = 30
+		start = time.Now()
+		for {
+			if len(listenService) == 0 {
+				js, _ := json.Marshal(listenService)
+				fmt.Printf("Current service: %s\n", string(js))
+				break
+			}
+			if time.Since(start).Seconds() > float64(timeout) {
+				fmt.Println("Timeout exceeded. Exiting loop.")
+				break
+			}
+			time.Sleep(5 * time.Second)
+		}
+		assert.True(t, len(listenService) == 0)
+	})
 }
 
-func Test_RegisterServiceInstance__DeregisterService_withGroupName(t *testing.T) {
-    var serviceName string = "DEMO" + rands(10)
-    successR, errR := NewTestNamingClient().RegisterInstance(vo.RegisterInstanceParam{
-        ServiceName: serviceName,
-        Ip:          "10.0.0.10",
-        Port:        80,
-        GroupName:   "test_group",
-        Ephemeral:   false,
-    })
-    assert.Equal(t, nil, errR)
-    assert.Equal(t, true, successR)
+func Test_Subscribe_And_Unsubscribe(t *testing.T) {
+	var serviceName string = RandServiceName(10)
+	var listenService []model.Instance
+	client := CreateNamingClient(false)
 
-    time.Sleep(5 * time.Second)
+	subscribeParam := &vo.SubscribeParam{
+		ServiceName: serviceName,
+		GroupName:   DEFAULT_GROUP,
+		SubscribeCallback: func(services []model.Instance, err error) {
+			if err != nil {
+				log.Printf("subscribe error:%+v", err)
+				return
+			}
+			assert.Nil(t, err)
+			listenService = services
+			for _, service := range services {
+				log.Printf("subscribe service:%+v", service)
+			}
+			js, _ := json.Marshal(services)
+			fmt.Printf("\n\n callback return services:%s \n\n", string(js))
+		},
+	}
+	err := client.Subscribe(subscribeParam)
+	assert.Nil(t, err)
 
+	success, err := client.RegisterInstance(vo.RegisterInstanceParam{
+		ServiceName: serviceName,
+		Ip:          TEST_IP_1,
+		Port:        TEST_PORT_8848,
+		Ephemeral:   true,
+		GroupName:   DEFAULT_GROUP,
+	})
+	assert.Equal(t, nil, err)
+	assert.Equal(t, true, success)
 
-    successD, errD := NewTestNamingClient().DeregisterInstance(vo.DeregisterInstanceParam{
-        ServiceName: serviceName,
-        Ip:          "10.0.0.10",
-        Port:        80,
-        GroupName:   "test_group",
-        Ephemeral:   false,
-    })
-    assert.Equal(t, nil, errD)
-    assert.Equal(t, true, successD)
+	timeout := 30
+	start := time.Now()
+	for {
+		if len(listenService) != 0 {
+			js, _ := json.Marshal(listenService)
+			fmt.Printf("Current service: %s\n", string(js))
+			break
+		}
+		if time.Since(start).Seconds() > float64(timeout) {
+			fmt.Println("Timeout exceeded. Exiting loop.")
+			break
+		}
+		time.Sleep(5 * time.Second)
+	}
+	assert.True(t, len(listenService) != 0)
+
+	listenService = []model.Instance{}
+	errU := client.Unsubscribe(subscribeParam)
+	assert.Nil(t, errU)
+
+	// expect unsubscribe after update
+	success, err = client.UpdateInstance(vo.UpdateInstanceParam{
+		ServiceName: serviceName,
+		Ip:          TEST_IP_1,
+		Port:        TEST_PORT_8080,
+		Weight:      2,
+		Ephemeral:   true,
+		GroupName:   DEFAULT_GROUP,
+	})
+	assert.Equal(t, nil, err)
+	assert.Equal(t, true, success)
+
+	timeout = 30
+	start = time.Now()
+	for {
+		if len(listenService) != 0 {
+			js, _ := json.Marshal(listenService)
+			fmt.Printf("Current service: %s\n", string(js))
+			break
+		}
+		if time.Since(start).Seconds() > float64(timeout) {
+			fmt.Println("Timeout exceeded. Exiting loop.")
+			break
+		}
+		time.Sleep(5 * time.Second)
+	}
+	assert.True(t, len(listenService) == 0)
+
+	listenService = []model.Instance{}
+	errS := client.Subscribe(subscribeParam)
+	assert.Nil(t, errS)
+
+	// expect subscribe after update
+	success, err = client.UpdateInstance(vo.UpdateInstanceParam{
+		ServiceName: serviceName,
+		Ip:          TEST_IP_1,
+		Port:        TEST_PORT_8848,
+		Weight:      100,
+		Ephemeral:   true,
+		GroupName:   DEFAULT_GROUP,
+	})
+	assert.Equal(t, nil, err)
+	assert.Equal(t, true, success)
+
+	timeout = 30
+	start = time.Now()
+	for {
+		if len(listenService) != 0 {
+			js, _ := json.Marshal(listenService)
+			fmt.Printf("Current service: %s\n", string(js))
+			break
+		}
+		if time.Since(start).Seconds() > float64(timeout) {
+			fmt.Println("Timeout exceeded. Exiting loop.")
+			break
+		}
+		time.Sleep(5 * time.Second)
+	}
+	assert.True(t, len(listenService) != 0)
+
 }
 
-func Test_RegisterServiceInstance_withCluster(t *testing.T) {
-    var serviceName string = "DEMO" + rands(10)
-    success, err := NewTestNamingClient().RegisterInstance(vo.RegisterInstanceParam{
-        ServiceName: serviceName,
-        Ip:          "10.0.0.10",
-        Port:        80,
-        GroupName:   "test_group",
-        ClusterName: "test",
-        Ephemeral:   false,
-    })
-    assert.Equal(t, nil, err)
-    assert.Equal(t, true, success)
+func Test_ReloadCurrent_And_Subscribe(t *testing.T) {
+	var serviceName string = RandServiceName(10)
+	var listenService []model.Instance
+	client := CreateNamingClient(false)
+
+	subscribeParam := &vo.SubscribeParam{
+		ServiceName: serviceName,
+		GroupName:   DEFAULT_GROUP,
+		SubscribeCallback: func(services []model.Instance, err error) {
+			if err != nil {
+				log.Printf("subscribe error:%+v", err)
+				return
+			}
+			assert.Nil(t, err)
+			listenService = services
+			for _, service := range services {
+				log.Printf("subscribe service:%+v", service)
+			}
+			js, _ := json.Marshal(services)
+			fmt.Printf("\n\n callback return services:%s \n\n", string(js))
+		},
+	}
+	err := client.Subscribe(subscribeParam)
+	assert.Nil(t, err)
+
+	success, err := client.RegisterInstance(vo.RegisterInstanceParam{
+		ServiceName: serviceName,
+		Ip:          TEST_IP_1,
+		Port:        TEST_PORT_8848,
+		Ephemeral:   true,
+		GroupName:   DEFAULT_GROUP,
+	})
+	assert.Equal(t, nil, err)
+	assert.Equal(t, true, success)
+
+	timeout := 30
+	start := time.Now()
+	for {
+		if len(listenService) != 0 {
+			js, _ := json.Marshal(listenService)
+			fmt.Printf("Current service: %s\n", string(js))
+			break
+		}
+		if time.Since(start).Seconds() > float64(timeout) {
+			fmt.Println("Timeout exceeded. Exiting loop.")
+			break
+		}
+		time.Sleep(5 * time.Second)
+	}
+	assert.True(t, len(listenService) != 0)
+
+	listenService = []model.Instance{}
+	params := make(map[string]string)
+	params["count"] = "0"
+	// make server break connect, it should be effect in singleton, but may not be effect in cluster
+	body := HttpGet("/nacos/v2/core/loader/reloadCurrent", params)
+	if body == "" {
+		assert.True(t, false)
+	} else {
+		assert.Equal(t, "success", body)
+		// expect subscribe after update
+		success, err = client.UpdateInstance(vo.UpdateInstanceParam{
+			ServiceName: serviceName,
+			Ip:          TEST_IP_1,
+			Port:        TEST_PORT_8848,
+			Weight:      100,
+			Ephemeral:   true,
+			GroupName:   DEFAULT_GROUP,
+		})
+		assert.Equal(t, nil, err)
+		assert.Equal(t, true, success)
+
+		timeout = 30
+		start = time.Now()
+		for {
+			if len(listenService) != 0 {
+				js, _ := json.Marshal(listenService)
+				fmt.Printf("Current service: %s\n", string(js))
+				break
+			}
+			if time.Since(start).Seconds() > float64(timeout) {
+				fmt.Println("Timeout exceeded. Exiting loop.")
+				break
+			}
+			time.Sleep(5 * time.Second)
+		}
+		assert.True(t, len(listenService) != 0)
+	}
 }
-
-
-func TestNamingClient_GetAllServicesInfo(t *testing.T) {
-    //create ServerConfig
-    var serviceName string = "testGet" + rands(10)
-    success, err := NewTestNamingClient().RegisterInstance(vo.RegisterInstanceParam{
-        ServiceName: serviceName,
-        Ip:          "10.0.0.10",
-        Port:        80,
-        Ephemeral:   false,
-        GroupName: "DEFAULT_GROUP",
-    })
-    assert.Equal(t, nil, err)
-    assert.Equal(t, true, success)
-
-    time.Sleep(5 * time.Second)
-
-    result, err := NewTestNamingClient().GetAllServicesInfo(vo.GetAllServiceInfoParam{
-        GroupName: "DEFAULT_GROUP",
-        PageNo:    1,
-        PageSize:  20,
-    })
-
-    assert.NotNil(t, result.Doms)
-    assert.Nil(t, err)
-}
-
-// func TestSubscribe(t *testing.T) {
-// 	err := NewTestNamingClient().Subscribe(vo.SubscribeParam{
-//     ServiceName: "DEMO6",
-//     GroupName:   "test_group",
-// 		Clusters:    []string{"DEFAULT"},
-//     SubscribeCallback: func(services []model.SubscribeService, err error) {
-// 				assert.Nil(t, err)
-//
-// 				js, _ := json.Marshal(services)
-//         fmt.Printf("\n\n callback return services:%s \n\n", string(js))
-//     },
-// 	})
-//
-// 	assert.Nil(t, err)
-//
-// }

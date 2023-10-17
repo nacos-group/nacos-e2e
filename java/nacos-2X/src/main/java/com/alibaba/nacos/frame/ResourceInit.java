@@ -163,12 +163,35 @@ public class ResourceInit {
 
     private static void getNacosClientVersion() {
         String key = "nacos.client.version";
-        nacosClientVersion = System.getenv(key);
-        if (StringUtils.isBlank(nacosClientVersion)) {
-            nacosClientVersion = getPomProperties(key, "pom.xml");
-        }
-        if (StringUtils.isBlank(nacosClientVersion)) {
-            nacosClientVersion = getPomProperties(key, "java/nacos-2X/pom.xml");
+        nacosClientVersion = System.getenv(key) == null ? System.getProperty(key) : System.getenv(key);
+        try {
+            if (StringUtils.isBlank(nacosClientVersion)) {
+                nacosClientVersion = getPomProperties(key, "pom.xml");
+            }
+            if (StringUtils.isBlank(nacosClientVersion)) {
+                nacosClientVersion = getPomProperties(key, "java/nacos-2X/pom.xml");
+            }
+            // it will be range version
+            if (nacosClientVersion.startsWith("[") || nacosClientVersion.startsWith("(") ) {
+                String[] versionRange = nacosClientVersion.split(",");
+                if (versionRange.length == 2) {
+                    // [x,y] (x,y) [x,y) (x,y]
+                    String startVersion = versionRange[0].substring(1);
+                    String endVersion = versionRange[1].substring(0, versionRange[1].length() - 1);
+                    if (nacosClientVersion.endsWith(")")) {
+                        nacosClientVersion = NacosClientVersionChecker.getLatestVersion(startVersion,
+                            endVersion, "open");
+                    } else if (nacosClientVersion.endsWith("]")) {
+                        nacosClientVersion = NacosClientVersionChecker.getLatestVersion(startVersion,
+                            endVersion, "close");
+                    }
+                } else {
+                    // [x] (x)
+                    nacosClientVersion = nacosServerVersion.substring(1, nacosClientVersion.length() - 1);
+                }
+            }
+        } catch (Exception e) {
+            log.error("getNacosClientVersion Exception", e);
         }
         log.info("nacosClientVersion is " + nacosClientVersion);
     }
