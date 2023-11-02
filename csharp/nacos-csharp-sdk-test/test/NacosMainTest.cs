@@ -7,6 +7,7 @@ using System;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
+using System.Text.RegularExpressions;
 
 namespace nacos.tests
 {
@@ -22,7 +23,26 @@ namespace nacos.tests
         static IServiceProvider InitServiceProvider()
         {
             IServiceCollection services = new ServiceCollection();
-            string nacos_server_address = Environment.GetEnvironmentVariable("serverList");
+            TextWriter output = Console.Out;
+
+            string input = Environment.GetEnvironmentVariable("ALL_IP");
+            string nacos_server_address = "";
+            string[] tokens = input.Split(',');
+            foreach (string token in tokens)
+            {
+                if (token.StartsWith("nacos-"))
+                {
+                    string[] parts = token.Split(':');
+                    if (parts.Length > 1)
+                    {
+                        string ipAddress = parts[1];
+                        output.WriteLine($"ip {ipAddress}");
+                        nacos_server_address = ipAddress;
+                    }
+                }
+            }
+
+            // string nacos_server_address = Environment.GetEnvironmentVariable("serverList");
             // output.WriteLine($"InitServiceProvider, nacos_server_address {nacos_server_address} ");
             string url = "http://"+nacos_server_address+":8848";
             // string namespaceId = Environment.GetEnvironmentVariable("namespaceId");

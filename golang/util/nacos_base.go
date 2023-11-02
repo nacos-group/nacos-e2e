@@ -35,7 +35,21 @@ const TEST_PORT_8080 = 8080
 const TEST_PORT_8848 = 8848
 
 func init() {
-	serverList = os.Getenv("serverList")
+	var ALL_IP = os.Getenv("ALL_IP")
+    pairs := strings.Split(str, ",")
+    firstPair := ""
+    firstValue := ""
+    for _, pair := range pairs {
+        if strings.HasPrefix(pair, "nacos-") {
+            firstPair = pair
+            firstValue = strings.Split(pair, ":")[1]
+            break
+        }
+    }
+    fmt.Println("First pair:", firstPair)
+    fmt.Println("First value:", firstValue)
+
+    serverList = firstValue
 	Ns = os.Getenv("namespace")
 	Ak = os.Getenv("ACCESS_KEY")
 	Sk = os.Getenv("SECRET_KEY")

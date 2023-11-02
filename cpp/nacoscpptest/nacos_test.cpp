@@ -9,13 +9,56 @@ using namespace testing;
 using namespace std;
 using namespace nacos;
 
+std::string extractNacosIPs(const std::string& inputString) {
+    std::vector<std::string> nacosIPs;
+    std::string delimiter = ","; // split by ,
+    size_t pos = 0;
+    std::string token;
+
+    while ((pos = inputString.find(delimiter)) != std::string::npos) {
+        token = inputString.substr(0, pos);
+        inputString.erase(0, pos + delimiter.length());
+
+        // check start with "nacos-"
+        if (token.find("nacos-") == 0) {
+            size_t colonPos = token.find(":");
+            if (colonPos != std::string::npos) {
+                std::string ip = token.substr(colonPos + 1);
+                nacosIPs.push_back(ip);
+            }
+        }
+    }
+
+    if (inputString.find("nacos-") == 0) {
+        size_t colonPos = inputString.find(":");
+        if (colonPos != std::string::npos) {
+            std::string ip = inputString.substr(colonPos + 1);
+            nacosIPs.push_back(ip);
+        }
+    }
+
+    std::string nacos_server_address;
+    for (const auto& ip : nacosIPs) {
+        nacos_server_address = ip + ":8848";
+        break;
+    }
+//    if (!nacos_server_address.empty()) {
+//        nacos_server_address.pop_back();
+//    }
+    return nacos_server_address;
+}
+
 TEST(ConfigTestSuit,CASE1_publishAndGetConfig) {
     cout << "====Begin to test====" << endl;
-    char *nacos_server_address;
-    nacos_server_address = getenv("serverList");
-    string str = nacos_server_address;
+    char *ALL_IP;
+    ALL_IP = getenv("ALL_IP");
+    string inputString = ALL_IP;
+    std::cout << "ALL_IP is:" << inputString << std::endl;
+    std::string nacos_server_address = extractNacosIPs(inputString);
+    std::cout << "SERVER_ADDR is:" << std::endl;
+
     Properties props;
-    props[PropertyKeyConst::SERVER_ADDR] = str + ":8848" ;//server address
+    props[PropertyKeyConst::SERVER_ADDR] = nacos_server_address ;//server address
     INacosServiceFactory *factory = NacosFactoryFactory::getNacosFactory(props);
     ResourceGuard <INacosServiceFactory> _guardFactory(factory);
     ConfigService *n = factory->CreateConfigService();
@@ -79,11 +122,15 @@ public:
 
 TEST(ConfigTestSuit,CASE2_ListenAndPublisConfig) {
     cout << "====Begin to test====" << endl;
-    char *nacos_server_address;
-    nacos_server_address = getenv("serverList");
-    string str = nacos_server_address;
+    char *ALL_IP;
+    ALL_IP = getenv("ALL_IP");
+    string inputString = ALL_IP;
+    std::cout << "ALL_IP is:" << inputString << std::endl;
+    std::string nacos_server_address = extractNacosIPs(inputString);
+    std::cout << "SERVER_ADDR is:" << std::endl;
+
     Properties props;
-    props[PropertyKeyConst::SERVER_ADDR] = str + ":8848" ;//server address
+    props[PropertyKeyConst::SERVER_ADDR] = nacos_server_address;
     INacosServiceFactory *factory = NacosFactoryFactory::getNacosFactory(props);
     ResourceGuard <INacosServiceFactory> _guardFactory(factory);
     ConfigService *n = factory->CreateConfigService();
@@ -120,11 +167,15 @@ TEST(ConfigTestSuit,CASE2_ListenAndPublisConfig) {
 
 TEST(NamingTestSuit,CASE3_registerAndGetAllInstances) {
     cout << "====Begin to test====" << endl;
-    char *nacos_server_address;
-    nacos_server_address = getenv("serverList");
-    string str = nacos_server_address;
+    char *ALL_IP;
+    ALL_IP = getenv("ALL_IP");
+    string inputString = ALL_IP;
+    std::cout << "ALL_IP is:" << inputString << std::endl;
+    std::string nacos_server_address = extractNacosIPs(inputString);
+    std::cout << "SERVER_ADDR is:" << std::endl;
+
     Properties props;
-    props[PropertyKeyConst::SERVER_ADDR] = str + ":8848" ;//server address
+    props[PropertyKeyConst::SERVER_ADDR] = nacos_server_address;
     INacosServiceFactory *factory = NacosFactoryFactory::getNacosFactory(props);
     ResourceGuard <INacosServiceFactory> _guardFactory(factory);
     NamingService *n = factory->CreateNamingService();
@@ -207,11 +258,15 @@ public:
 
 TEST(NamingTestSuit,CASE4_ListenAndRegisterInstance) {
     cout << "====Begin to test====" << endl;
-    char *nacos_server_address;
-    nacos_server_address = getenv("serverList");
-    string str = nacos_server_address;
+    char *ALL_IP;
+    ALL_IP = getenv("ALL_IP");
+    string inputString = ALL_IP;
+    std::cout << "ALL_IP is:" << inputString << std::endl;
+    std::string nacos_server_address = extractNacosIPs(inputString);
+    std::cout << "SERVER_ADDR is:" << std::endl;
+
     Properties props;
-    props[PropertyKeyConst::SERVER_ADDR] = str + ":8848" ;//server address
+    props[PropertyKeyConst::SERVER_ADDR] = nacos_server_address;
     INacosServiceFactory *factory = NacosFactoryFactory::getNacosFactory(props);
     ResourceGuard <INacosServiceFactory> _guardFactory(factory);
     NamingService *n = factory->CreateNamingService();
