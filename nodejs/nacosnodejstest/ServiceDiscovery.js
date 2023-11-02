@@ -3,9 +3,26 @@
 const NacosNamingClient = require('nacos').NacosNamingClient;
 const logger = console;
 
-const serverList = (process.env.serverList == '${serverList}' || process.env.serverList == undefined
-    || process.env.serverList == null || process.env.serverList == '')
-    ? '127.0.0.1:8848' : process.env.serverList;
+const ALL_IP = process.env.ALL_IP || '';
+let serverList = '';
+
+if (ALL_IP) {
+    const pairs = ALL_IP.split(',');
+    for (const pair of pairs) {
+        if (pair.startsWith('nacos-')) {
+            serverList = pair.split(':')[1];
+            break;
+        }
+    }
+}
+
+if (!serverList) {
+    serverList = '127.0.0.1:8848';
+}
+
+// const serverList = (process.env.serverList == '${serverList}' || process.env.serverList == undefined
+//     || process.env.serverList == null || process.env.serverList == '')
+//     ? '127.0.0.1:8848' : process.env.serverList;
 console.log("get env serverList = ", serverList);
 
 const namingClient = new NacosNamingClient({

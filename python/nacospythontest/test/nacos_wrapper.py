@@ -21,7 +21,23 @@ logger.setLevel(logging.DEBUG)
 
 #get nacos servcer from env
 env_dist = os.environ
-SERVER_ADDRESSES = env_dist.get("serverList")
+def getServerAddress():
+    ips = env_dist.get("ALL_IP", "")
+    logger.info("ALL_IP:"+ips)
+    address = ""
+    if ips:
+        pairs = ips.split(",")
+        for pair in pairs:
+            if pair.startswith("nacos-"):
+                address = pair.split(":")[1]+":8848"
+                break
+    if not address:
+        address = "127.0.0.1:8848"
+    logger.info("address:"+address)
+    return address
+
+SERVER_ADDRESSES = getServerAddress()
+# SERVER_ADDRESSES = env_dist.get("serverList")
 NAMESPACE = None
 client = nacos.NacosClient(SERVER_ADDRESSES, namespace=NAMESPACE, username=None, password=None)
 ip_list = []
@@ -34,7 +50,7 @@ data_id=""
 serviceListenValue=""
 
 def configCallback(args):
-    print("watch Config:"+str(args))
+    logger.info("watch Config:"+str(args))
     global content,row_content,namespace,group,data_id
     content=args["content"]
     row_content = args["raw_content"]
@@ -48,7 +64,7 @@ def truncate_pangu_log():
     for pangu_log in pangu_logs:
         pangu_log_path = os.path.join('/dev/shm', pangu_log)
         with open(pangu_log_path, 'w') as pangu_log_file:
-            print("truncate file: " + pangu_log_path)
+            logger.info("truncate file: " + pangu_log_path)
             pangu_log_file.truncate()
 
 def addConfigWatcher(data_id, group):
@@ -58,8 +74,8 @@ def addConfigWatcher(data_id, group):
         client.add_config_watcher(data_id=data_id, group=group, cb=configCallback)
     except Exception as e:
         info = traceback.format_exc()
-        print('addConfigWatcher get Exception',e)
-        print('addConfigWatcher get Exception info',info)
+        logger.info('addConfigWatcher get Exception',e)
+        logger.info('addConfigWatcher get Exception info',info)
 
 
 def publishConfig(data_id,group,content):

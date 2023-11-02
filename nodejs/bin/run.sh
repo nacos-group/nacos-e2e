@@ -1,15 +1,15 @@
 # get run params
 echo 'get serverList'
-echo $serverList
-if [[ "$serverList" == "" ]]
+echo ALL_IP
+if [[ "ALL_IP" == "" ]]
 then
-serverList=127.0.0.1
+serverList=nacos-0:127.0.0.1
 export serverList
 else
-serverList=$serverList
+serverList=ALL_IP
 export serverList
 fi
-echo 'serverList is ' $serverList
+echo 'serverList is ' ALL_IP
 echo '====start test===='
 cd ./nodejs/nacosnodejstest &&\
 npm install &&\
