@@ -21,7 +21,7 @@ output/
 go.work
 
 
-go.mod
+#go.mod
 go.sum
 
 cover/
