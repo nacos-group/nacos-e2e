@@ -36,7 +36,7 @@ const TEST_PORT_8848 = 8848
 
 func init() {
 	var ALL_IP = os.Getenv("ALL_IP")
-    pairs := strings.Split(str, ",")
+    pairs := strings.Split(ALL_IP, ",")
     firstPair := ""
     firstValue := ""
     for _, pair := range pairs {
