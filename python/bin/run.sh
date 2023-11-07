@@ -1,15 +1,15 @@
 # get run params
-echo 'get serverList'
-echo $serverList
-if [[ "$serverList" == "" ]]
+echo 'get ALL_IP'
+echo $ALL_IP
+if [[ "$ALL_IP" == "" ]]
 then
-serverList=127.0.0.1
-export serverList
+ALL_IP=nacos-0:127.0.0.1
+export ALL_IP
 else
-serverList=$serverList
-export serverList
+ALL_IP=$ALL_IP
+export ALL_IP
 fi
-echo 'serverList is ' $serverList
+echo 'ALL_IP is ' $ALL_IP
 echo '====start test===='
 cd ./python/nacospythontest &&\
 python run_all.py; echo "done"
