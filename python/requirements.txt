@@ -1,1 +1,1 @@
-nacos-sdk-python==0.1.12
+nacos-sdk-python==0.1.14
