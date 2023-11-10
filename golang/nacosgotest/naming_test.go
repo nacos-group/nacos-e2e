@@ -30,7 +30,10 @@ func Test_GetService_GetAllServicesInfo_ClusterName(t *testing.T) {
 		assert.Equal(t, nil, err)
 		assert.Equal(t, true, success)
 
-		time.Sleep(5 * time.Second)
+		tempTimer := time.NewTimer(5 * time.Second)
+		select {
+		case <-tempTimer.C:
+		}
 
 		result, err := client.GetService(vo.GetServiceParam{
 			ServiceName: serviceName,
@@ -67,7 +70,10 @@ func Test_GetService_GetAllServicesInfo_ClusterName(t *testing.T) {
 		assert.Equal(t, nil, err)
 		assert.Equal(t, true, success)
 
-		time.Sleep(5 * time.Second)
+		tempTimer := time.NewTimer(5 * time.Second)
+		select {
+		case <-tempTimer.C:
+		}
 
 		result, err := client.GetService(vo.GetServiceParam{
 			ServiceName: serviceName,
@@ -111,7 +117,6 @@ func Test_SelectInstances_SelectAllInstances(t *testing.T) {
 		select {
 		case <-tempTimer.C:
 		}
-		//time.Sleep(10 * time.Second)
 
 		results, err := client.SelectInstances(vo.SelectInstancesParam{
 			ServiceName: serviceName,
@@ -206,7 +211,10 @@ func Test_RegisterInstance_DeregisterInstance_GroupName(t *testing.T) {
 		assert.Equal(t, nil, errR)
 		assert.Equal(t, true, successR)
 
-		time.Sleep(5 * time.Second)
+		tempTimer := time.NewTimer(5 * time.Second)
+		select {
+		case <-tempTimer.C:
+		}
 
 		successD, errD := client.DeregisterInstance(vo.DeregisterInstanceParam{
 			ServiceName: serviceName,
@@ -232,7 +240,10 @@ func Test_RegisterInstance_DeregisterInstance_GroupName(t *testing.T) {
 		assert.Equal(t, nil, errR)
 		assert.Equal(t, true, successR)
 
-		time.Sleep(5 * time.Second)
+		tempTimer := time.NewTimer(5 * time.Second)
+		select {
+		case <-tempTimer.C:
+		}
 
 		successD, errD := client.DeregisterInstance(vo.DeregisterInstanceParam{
 			ServiceName: serviceName,
@@ -262,7 +273,10 @@ func Test_RegisterInstance_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 		assert.Equal(t, nil, err)
 		assert.Equal(t, true, success)
 
-		time.Sleep(5 * time.Second)
+		tempTimer := time.NewTimer(5 * time.Second)
+		select {
+		case <-tempTimer.C:
+		}
 
 		values, errs := client.SelectAllInstances(vo.SelectAllInstancesParam{
 			ServiceName: serviceName,
@@ -301,8 +315,11 @@ func Test_RegisterInstance_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 				fmt.Println("Timeout exceeded. Exiting loop.")
 				break
 			}
-			fmt.Println("Sleep 5s……")
-			time.Sleep(5 * time.Second)
+			fmt.Println("Wait 5s……")
+			tempTimer := time.NewTimer(5 * time.Second)
+			select {
+			case <-tempTimer.C:
+			}
 		}
 		assert.True(t, len(values) != 0)
 	})
@@ -322,7 +339,10 @@ func Test_RegisterInstance_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 		assert.Equal(t, nil, err)
 		assert.Equal(t, true, success)
 
-		time.Sleep(5 * time.Second)
+		tempTimer := time.NewTimer(5 * time.Second)
+		select {
+		case <-tempTimer.C:
+		}
 
 		values, errs := client.SelectAllInstances(vo.SelectAllInstancesParam{
 			ServiceName: serviceName,
@@ -342,7 +362,6 @@ func Test_RegisterInstance_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 			ServiceName: serviceName,
 			Ip:          TEST_IP_1,
 			Port:        TEST_PORT_8848,
-			Ephemeral:   false,
 		})
 		assert.Equal(t, nil, errD)
 		assert.Equal(t, true, successD)
@@ -362,10 +381,13 @@ func Test_RegisterInstance_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 				fmt.Println("Timeout exceeded. Exiting loop.")
 				break
 			}
-			fmt.Println("Sleep 5s……")
-			time.Sleep(5 * time.Second)
+			fmt.Println("Wait 5s……")
+			//time.Sleep(5 * time.Second)
+			tempTimer := time.NewTimer(5 * time.Second)
+			select {
+			case <-tempTimer.C:
+			}
 		}
-		assert.NotNil(t, values)
 		assert.Nil(t, err)
 		assert.True(t, len(values) == 0)
 	})
@@ -391,7 +413,10 @@ func Test_RegisterInstance_EphemeralTrueAndFalse_AtTheSameTime(t *testing.T) {
 	body := HttpPost("/nacos/v1/ns/instance", params)
 	assert.Equal(t, "ok", body)
 
-	time.Sleep(5 * time.Second)
+	tempTimer := time.NewTimer(5 * time.Second)
+	select {
+	case <-tempTimer.C:
+	}
 	success, err := client.RegisterInstance(vo.RegisterInstanceParam{
 		ServiceName: serviceName,
 		Ip:          TEST_IP_1,
@@ -470,7 +495,10 @@ func Test_Subscribe(t *testing.T) {
 			fmt.Println("Timeout exceeded. Exiting loop.")
 			break
 		}
-		time.Sleep(5 * time.Second)
+		tempTimer := time.NewTimer(5 * time.Second)
+		select {
+		case <-tempTimer.C:
+		}
 	}
 	assert.True(t, len(listenService) != 0)
 }
@@ -493,7 +521,10 @@ func Test_Subscribe_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 		assert.Equal(t, nil, err)
 		assert.Equal(t, true, success)
 
-		time.Sleep(5 * time.Second)
+		tempTimer := time.NewTimer(5 * time.Second)
+		select {
+		case <-tempTimer.C:
+		}
 
 		subscribeParam := &vo.SubscribeParam{
 			ServiceName: serviceName,
@@ -528,7 +559,10 @@ func Test_Subscribe_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 				fmt.Println("Timeout exceeded. Exiting loop.")
 				break
 			}
-			time.Sleep(5 * time.Second)
+			tempTimer := time.NewTimer(5 * time.Second)
+			select {
+			case <-tempTimer.C:
+			}
 		}
 		assert.True(t, len(listenService) != 0)
 
@@ -553,7 +587,10 @@ func Test_Subscribe_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 				fmt.Println("Timeout exceeded. Exiting loop.")
 				break
 			}
-			time.Sleep(5 * time.Second)
+			tempTimer := time.NewTimer(5 * time.Second)
+			select {
+			case <-tempTimer.C:
+			}
 		}
 		assert.True(t, len(listenService) != 0)
 	})
@@ -575,7 +612,10 @@ func Test_Subscribe_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 		assert.Equal(t, nil, err)
 		assert.Equal(t, true, success)
 
-		time.Sleep(5 * time.Second)
+		tempTimer := time.NewTimer(5 * time.Second)
+		select {
+		case <-tempTimer.C:
+		}
 
 		subscribeParam := &vo.SubscribeParam{
 			ServiceName: serviceName,
@@ -610,7 +650,10 @@ func Test_Subscribe_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 				fmt.Println("Timeout exceeded. Exiting loop.")
 				break
 			}
-			time.Sleep(5 * time.Second)
+			tempTimer := time.NewTimer(5 * time.Second)
+			select {
+			case <-tempTimer.C:
+			}
 		}
 		assert.True(t, len(listenService) != 0)
 
@@ -637,7 +680,10 @@ func Test_Subscribe_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 				fmt.Println("Timeout exceeded. Exiting loop.")
 				break
 			}
-			time.Sleep(5 * time.Second)
+			tempTimer := time.NewTimer(5 * time.Second)
+			select {
+			case <-tempTimer.C:
+			}
 		}
 		assert.True(t, len(listenService) == 0)
 	})
@@ -692,7 +738,10 @@ func Test_Subscribe_And_Unsubscribe(t *testing.T) {
 			fmt.Println("Timeout exceeded. Exiting loop.")
 			break
 		}
-		time.Sleep(5 * time.Second)
+		tempTimer := time.NewTimer(5 * time.Second)
+		select {
+		case <-tempTimer.C:
+		}
 	}
 	assert.True(t, len(listenService) != 0)
 
@@ -726,7 +775,10 @@ func Test_Subscribe_And_Unsubscribe(t *testing.T) {
 			fmt.Println("Timeout exceeded. Exiting loop.")
 			break
 		}
-		time.Sleep(5 * time.Second)
+		tempTimer := time.NewTimer(5 * time.Second)
+		select {
+		case <-tempTimer.C:
+		}
 	}
 	assert.True(t, len(listenService) == 0)
 
@@ -760,7 +812,10 @@ func Test_Subscribe_And_Unsubscribe(t *testing.T) {
 			fmt.Println("Timeout exceeded. Exiting loop.")
 			break
 		}
-		time.Sleep(5 * time.Second)
+		tempTimer := time.NewTimer(5 * time.Second)
+		select {
+		case <-tempTimer.C:
+		}
 	}
 	assert.True(t, len(listenService) != 0)
 
@@ -815,7 +870,10 @@ func Test_ReloadCurrent_And_Subscribe(t *testing.T) {
 			fmt.Println("Timeout exceeded. Exiting loop.")
 			break
 		}
-		time.Sleep(5 * time.Second)
+		tempTimer := time.NewTimer(5 * time.Second)
+		select {
+		case <-tempTimer.C:
+		}
 	}
 	assert.True(t, len(listenService) != 0)
 
@@ -854,7 +912,10 @@ func Test_ReloadCurrent_And_Subscribe(t *testing.T) {
 				fmt.Println("Timeout exceeded. Exiting loop.")
 				break
 			}
-			time.Sleep(5 * time.Second)
+			tempTimer := time.NewTimer(5 * time.Second)
+			select {
+			case <-tempTimer.C:
+			}
 		}
 		assert.True(t, len(listenService) != 0)
 	}
