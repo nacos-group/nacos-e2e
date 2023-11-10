@@ -25,14 +25,17 @@ import (
 var serverList string = "127.0.0.1"
 var curServer = ""
 var Ns = ""
-var Ak = ""
-var Sk = ""
+
+var Sk = "ak"
+
+var Ak = "LTA"
 
 const DEFAULT_GROUP = "DEFAULT_GROUP"
+
 const TEST_IP_1 = "127.0.0.1"
 const TEST_IP_2 = "127.0.0.2"
 const TEST_PORT_8080 = 8080
-const TEST_PORT_8848 = 8848
+const TEST_PORT_8848 uint64 = 8848
 
 func init() {
 	var ALL_IP = os.Getenv("ALL_IP")
@@ -54,11 +57,11 @@ func init() {
 	Ak = os.Getenv("ACCESS_KEY")
 	Sk = os.Getenv("SECRET_KEY")
 
-	//  If debugging locally, open below and configure env param
-	// 	serverList = "127.0.0.1"
-	// 	Ns = ""
-	// 	Ak = "XXXXX"
-	// 	Sk = "XXXXX"
+	//If debugging locally, open below and configure env param
+	//serverList = "127.0.0.1"
+	//Ns = ""
+	//Ak = "XXXXX"
+	//Sk = "XXXXX"
 
 	curServer = "http://" + serverList + ":8848"
 	fmt.Printf("init: serverList %s, curServer %s, ns %s, Ak %s, Sk %s\n", serverList, curServer, Ns, Ak, Sk)
