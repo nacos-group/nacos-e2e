@@ -3,7 +3,7 @@ package nacos_go_test
 import (
 	"encoding/json"
 	"fmt"
-	. "github.com/nacos-group/nacos-e2e/golang/util"
+	. "github.com/nacos-group/nacos-e2e/golang/utils"
 	"github.com/nacos-group/nacos-sdk-go/v2/model"
 	"github.com/nacos-group/nacos-sdk-go/v2/util"
 	"github.com/nacos-group/nacos-sdk-go/v2/vo"

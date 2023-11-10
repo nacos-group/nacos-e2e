@@ -2,7 +2,7 @@ package nacos_go_test
 
 import (
 	"fmt"
-	. "github.com/nacos-group/nacos-e2e/golang/util"
+	. "github.com/nacos-group/nacos-e2e/golang/utils"
 	"github.com/nacos-group/nacos-sdk-go/v2/vo"
 	"github.com/stretchr/testify/assert"
 	"strconv"
