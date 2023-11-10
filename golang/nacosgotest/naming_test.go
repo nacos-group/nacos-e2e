@@ -3,12 +3,12 @@ package nacos_go_test
 import (
 	"encoding/json"
 	"fmt"
+	. "github.com/nacos-group/nacos-e2e/golang/utils"
 	"github.com/nacos-group/nacos-sdk-go/v2/model"
 	"github.com/nacos-group/nacos-sdk-go/v2/util"
 	"github.com/nacos-group/nacos-sdk-go/v2/vo"
 	"github.com/stretchr/testify/assert"
 	"log"
-	. "nacos_go_test/utils"
 	"strconv"
 	"testing"
 	"time"
@@ -90,6 +90,7 @@ func Test_SelectInstances_SelectAllInstances(t *testing.T) {
 	client := CreateNamingClient(false)
 	t.Run("TestEphemeralTrue", func(t *testing.T) {
 		var serviceName string = RandServiceName(10)
+		fmt.Println("service name: " + serviceName)
 		success, err := client.RegisterInstance(vo.RegisterInstanceParam{
 			ServiceName: serviceName,
 			Ip:          TEST_IP_1,
@@ -100,20 +101,25 @@ func Test_SelectInstances_SelectAllInstances(t *testing.T) {
 		assert.Equal(t, nil, err)
 		assert.Equal(t, true, success)
 
-		time.Sleep(5 * time.Second)
+		tempTimer := time.NewTimer(5 * time.Second)
+		select {
+		case <-tempTimer.C:
+		}
+		//time.Sleep(10 * time.Second)
 
 		results, err := client.SelectInstances(vo.SelectInstancesParam{
 			ServiceName: serviceName,
 			GroupName:   DEFAULT_GROUP,
+			HealthyOnly: true,
 		})
 		assert.NotNil(t, results)
 		assert.Nil(t, err)
 		assert.True(t, len(results) > 0)
 		for i, r := range results {
-			fmt.Println("i:", i, ": "+ToJsonString(r))
-			assert.Equal(t, serviceName, r.ServiceName)
+			fmt.Println("[SelectInstances] i:", i, ": "+ToJsonString(r))
+			assert.Equal(t, DEFAULT_GROUP+"@@"+serviceName, r.ServiceName)
 			assert.Equal(t, TEST_IP_1, r.Ip)
-			assert.Equal(t, TEST_PORT_8848, r.Port)
+			assert.True(t, TEST_PORT_8848 == r.Port)
 		}
 
 		values, errs := client.SelectAllInstances(vo.SelectAllInstancesParam{
@@ -124,8 +130,8 @@ func Test_SelectInstances_SelectAllInstances(t *testing.T) {
 		assert.Nil(t, errs)
 		assert.True(t, len(values) > 0)
 		for i, v := range values {
-			fmt.Println("i:", i, ": "+ToJsonString(v))
-			assert.Equal(t, serviceName, v.ServiceName)
+			fmt.Println("[SelectAllInstances] i:", i, ": "+ToJsonString(v))
+			assert.Equal(t, DEFAULT_GROUP+"@@"+serviceName, v.ServiceName)
 			assert.Equal(t, TEST_IP_1, v.Ip)
 			assert.Equal(t, TEST_PORT_8848, v.Port)
 		}
@@ -136,24 +142,29 @@ func Test_SelectInstances_SelectAllInstances(t *testing.T) {
 			ServiceName: serviceName,
 			Ip:          TEST_IP_1,
 			Port:        TEST_PORT_8848,
+			Enable:      true,
+			Healthy:     true,
 			Ephemeral:   false,
 			GroupName:   DEFAULT_GROUP,
 		})
 		assert.Equal(t, nil, err)
 		assert.Equal(t, true, success)
 
-		time.Sleep(5 * time.Second)
-
+		tempTimer := time.NewTimer(5 * time.Second)
+		select {
+		case <-tempTimer.C:
+		}
 		results, err := client.SelectInstances(vo.SelectInstancesParam{
 			ServiceName: serviceName,
 			GroupName:   DEFAULT_GROUP,
+			HealthyOnly: true,
 		})
 		assert.NotNil(t, results)
 		assert.Nil(t, err)
 		assert.True(t, len(results) > 0)
 		for i, r := range results {
 			fmt.Println("i:", i, ": "+ToJsonString(r))
-			assert.Equal(t, serviceName, r.ServiceName)
+			assert.Equal(t, DEFAULT_GROUP+"@@"+serviceName, r.ServiceName)
 			assert.Equal(t, TEST_IP_1, r.Ip)
 			assert.Equal(t, TEST_PORT_8848, r.Port)
 		}
@@ -167,7 +178,7 @@ func Test_SelectInstances_SelectAllInstances(t *testing.T) {
 		assert.True(t, len(values) > 0)
 		for i, v := range values {
 			fmt.Println("i:", i, ": "+ToJsonString(v))
-			assert.Equal(t, serviceName, v.ServiceName)
+			assert.Equal(t, DEFAULT_GROUP+"@@"+serviceName, v.ServiceName)
 			assert.Equal(t, TEST_IP_1, v.Ip)
 			assert.Equal(t, TEST_PORT_8848, v.Port)
 		}
@@ -233,6 +244,8 @@ func Test_RegisterInstance_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 			ServiceName: serviceName,
 			Ip:          TEST_IP_1,
 			Port:        TEST_PORT_8848,
+			Healthy:     true,
+			Enable:      true,
 			Ephemeral:   true,
 			GroupName:   DEFAULT_GROUP,
 		})
