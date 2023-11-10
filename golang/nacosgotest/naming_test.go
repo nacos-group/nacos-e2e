@@ -3,12 +3,12 @@ package nacos_go_test
 import (
 	"encoding/json"
 	"fmt"
-	. "github.com/nacos-group/nacos-e2e/golang/utils"
 	"github.com/nacos-group/nacos-sdk-go/v2/model"
 	"github.com/nacos-group/nacos-sdk-go/v2/util"
 	"github.com/nacos-group/nacos-sdk-go/v2/vo"
 	"github.com/stretchr/testify/assert"
 	"log"
+	. "nacos_go_test/utils"
 	"strconv"
 	"testing"
 	"time"
@@ -22,6 +22,8 @@ func Test_GetService_GetAllServicesInfo_ClusterName(t *testing.T) {
 			ServiceName: serviceName,
 			Ip:          TEST_IP_1,
 			Port:        TEST_PORT_8848,
+			Enable:      true,
+			Healthy:     true,
 			Ephemeral:   false,
 			GroupName:   DEFAULT_GROUP,
 		})
@@ -57,6 +59,8 @@ func Test_GetService_GetAllServicesInfo_ClusterName(t *testing.T) {
 			ServiceName: serviceName,
 			Ip:          TEST_IP_1,
 			Port:        TEST_PORT_8848,
+			Enable:      true,
+			Healthy:     true,
 			ClusterName: clusterName,
 			Ephemeral:   false,
 		})
@@ -95,6 +99,8 @@ func Test_SelectInstances_SelectAllInstances(t *testing.T) {
 			ServiceName: serviceName,
 			Ip:          TEST_IP_1,
 			Port:        TEST_PORT_8848,
+			Enable:      true,
+			Healthy:     true,
 			Ephemeral:   true,
 			GroupName:   DEFAULT_GROUP,
 		})
@@ -193,6 +199,8 @@ func Test_RegisterInstance_DeregisterInstance_GroupName(t *testing.T) {
 			ServiceName: serviceName,
 			Ip:          TEST_IP_1,
 			Port:        TEST_PORT_8848,
+			Enable:      true,
+			Healthy:     true,
 			Ephemeral:   true,
 		})
 		assert.Equal(t, nil, errR)
@@ -216,6 +224,8 @@ func Test_RegisterInstance_DeregisterInstance_GroupName(t *testing.T) {
 			ServiceName: serviceName,
 			Ip:          TEST_IP_1,
 			Port:        TEST_PORT_8848,
+			Enable:      true,
+			Healthy:     true,
 			GroupName:   "test_group",
 			Ephemeral:   false,
 		})
@@ -263,7 +273,7 @@ func Test_RegisterInstance_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 		assert.True(t, len(values) > 0)
 		for i, v := range values {
 			fmt.Println("i:", i, ": "+ToJsonString(v))
-			assert.Equal(t, serviceName, v.ServiceName)
+			assert.Equal(t, DEFAULT_GROUP+"@@"+serviceName, v.ServiceName)
 			assert.Equal(t, TEST_IP_1, v.Ip)
 			assert.Equal(t, TEST_PORT_8848, v.Port)
 		}
@@ -291,6 +301,7 @@ func Test_RegisterInstance_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 				fmt.Println("Timeout exceeded. Exiting loop.")
 				break
 			}
+			fmt.Println("Sleep 5s……")
 			time.Sleep(5 * time.Second)
 		}
 		assert.True(t, len(values) != 0)
@@ -303,6 +314,8 @@ func Test_RegisterInstance_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 			ServiceName: serviceName,
 			Ip:          TEST_IP_1,
 			Port:        TEST_PORT_8848,
+			Healthy:     true,
+			Enable:      true,
 			Ephemeral:   true,
 			GroupName:   DEFAULT_GROUP,
 		})
@@ -320,7 +333,7 @@ func Test_RegisterInstance_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 		assert.True(t, len(values) > 0)
 		for i, v := range values {
 			fmt.Println("i:", i, ": "+ToJsonString(v))
-			assert.Equal(t, serviceName, v.ServiceName)
+			assert.Equal(t, DEFAULT_GROUP+"@@"+serviceName, v.ServiceName)
 			assert.Equal(t, TEST_IP_1, v.Ip)
 			assert.Equal(t, TEST_PORT_8848, v.Port)
 		}
@@ -349,6 +362,7 @@ func Test_RegisterInstance_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 				fmt.Println("Timeout exceeded. Exiting loop.")
 				break
 			}
+			fmt.Println("Sleep 5s……")
 			time.Sleep(5 * time.Second)
 		}
 		assert.NotNil(t, values)
@@ -436,6 +450,8 @@ func Test_Subscribe(t *testing.T) {
 		ServiceName: serviceName,
 		Ip:          TEST_IP_1,
 		Port:        TEST_PORT_8848,
+		Healthy:     true,
+		Enable:      true,
 		Ephemeral:   true,
 		GroupName:   DEFAULT_GROUP,
 	})
@@ -469,6 +485,8 @@ func Test_Subscribe_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 			ServiceName: serviceName,
 			Ip:          TEST_IP_1,
 			Port:        TEST_PORT_8848,
+			Healthy:     true,
+			Enable:      true,
 			Ephemeral:   true,
 			GroupName:   DEFAULT_GROUP,
 		})
@@ -549,6 +567,8 @@ func Test_Subscribe_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 			ServiceName: serviceName,
 			Ip:          TEST_IP_1,
 			Port:        TEST_PORT_8848,
+			Healthy:     true,
+			Enable:      true,
 			Ephemeral:   true,
 			GroupName:   DEFAULT_GROUP,
 		})
@@ -652,6 +672,8 @@ func Test_Subscribe_And_Unsubscribe(t *testing.T) {
 		ServiceName: serviceName,
 		Ip:          TEST_IP_1,
 		Port:        TEST_PORT_8848,
+		Healthy:     true,
+		Enable:      true,
 		Ephemeral:   true,
 		GroupName:   DEFAULT_GROUP,
 	})
@@ -683,6 +705,8 @@ func Test_Subscribe_And_Unsubscribe(t *testing.T) {
 		ServiceName: serviceName,
 		Ip:          TEST_IP_1,
 		Port:        TEST_PORT_8080,
+		Healthy:     true,
+		Enable:      true,
 		Weight:      2,
 		Ephemeral:   true,
 		GroupName:   DEFAULT_GROUP,
@@ -715,6 +739,8 @@ func Test_Subscribe_And_Unsubscribe(t *testing.T) {
 		ServiceName: serviceName,
 		Ip:          TEST_IP_1,
 		Port:        TEST_PORT_8848,
+		Healthy:     true,
+		Enable:      true,
 		Weight:      100,
 		Ephemeral:   true,
 		GroupName:   DEFAULT_GROUP,
@@ -769,6 +795,8 @@ func Test_ReloadCurrent_And_Subscribe(t *testing.T) {
 		ServiceName: serviceName,
 		Ip:          TEST_IP_1,
 		Port:        TEST_PORT_8848,
+		Healthy:     true,
+		Enable:      true,
 		Ephemeral:   true,
 		GroupName:   DEFAULT_GROUP,
 	})
@@ -805,6 +833,8 @@ func Test_ReloadCurrent_And_Subscribe(t *testing.T) {
 			ServiceName: serviceName,
 			Ip:          TEST_IP_1,
 			Port:        TEST_PORT_8848,
+			Healthy:     true,
+			Enable:      true,
 			Weight:      100,
 			Ephemeral:   true,
 			GroupName:   DEFAULT_GROUP,
