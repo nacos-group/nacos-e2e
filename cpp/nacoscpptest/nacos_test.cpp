@@ -9,7 +9,7 @@ using namespace testing;
 using namespace std;
 using namespace nacos;
 
-std::string extractNacosIPs(const std::string& inputString) {
+std::string extractNacosIPs(std::string& inputString) {
     std::vector<std::string> nacosIPs;
     std::string delimiter = ","; // split by ,
     size_t pos = 0;
