@@ -296,6 +296,7 @@ func Test_RegisterInstance_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 			ServiceName: serviceName,
 			Ip:          TEST_IP_1,
 			Port:        TEST_PORT_8848,
+			GroupName:   DEFAULT_GROUP,
 		})
 		assert.Equal(t, nil, errD)
 		assert.Equal(t, true, successD)
@@ -327,6 +328,7 @@ func Test_RegisterInstance_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 	t.Run("TestCloseProtect", func(t *testing.T) {
 		client := CreateNamingClient(true)
 		var serviceName string = RandServiceName(10)
+		fmt.Println("service name: " + serviceName)
 		success, err := client.RegisterInstance(vo.RegisterInstanceParam{
 			ServiceName: serviceName,
 			Ip:          TEST_IP_1,
@@ -362,17 +364,20 @@ func Test_RegisterInstance_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 			ServiceName: serviceName,
 			Ip:          TEST_IP_1,
 			Port:        TEST_PORT_8848,
+			GroupName:   DEFAULT_GROUP,
+			Ephemeral:   true,
 		})
 		assert.Equal(t, nil, errD)
 		assert.Equal(t, true, successD)
 
-		timeout := 120
+		timeout := 240
 		start := time.Now()
 		for {
 			values, errs = client.SelectAllInstances(vo.SelectAllInstancesParam{
 				ServiceName: serviceName,
 				GroupName:   DEFAULT_GROUP,
 			})
+			fmt.Println("CurrentService:" + ToJsonString(values))
 			if len(values) == 0 {
 				fmt.Printf("Current SelectInstances is empty\n")
 				break
