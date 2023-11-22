@@ -4,6 +4,7 @@ using Nacos.V2;
 using Nacos.V2.DependencyInjection;
 using Nacos.V2.Utils;
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
