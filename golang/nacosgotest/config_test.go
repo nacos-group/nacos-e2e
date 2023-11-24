@@ -395,7 +395,7 @@ func Test_ReloadCurrentAndListenConfig(t *testing.T) {
 			DataId: dataId,
 			Group:  ""})
 
-	 cipher	assert.Nil(t, err)
+	 	assert.Nil(t, err)
 		assert.True(t, success)
 	}
 }
