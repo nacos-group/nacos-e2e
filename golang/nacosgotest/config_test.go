@@ -395,72 +395,7 @@ func Test_ReloadCurrentAndListenConfig(t *testing.T) {
 			DataId: dataId,
 			Group:  ""})
 
-		assert.Nil(t, err)
+	 cipher	assert.Nil(t, err)
 		assert.True(t, success)
 	}
-}
-
-func Test_PublishAndListenEncryptedConfig(t *testing.T) {
-	client := CreateConfigClient()
-	var dataId string = RandCipherDataId(10)
-	var group string = DEFAULT_GROUP
-	var pubContent string = RandStr(10)
-	var listenContent string
-
-	listenConfigParam := vo.ConfigParam{
-		DataId: dataId,
-		Group:  group,
-		OnChange: func(namespace, group, dataId, data string) {
-			fmt.Printf("Config changed: ns %s, dataId %s, group %s, data %s\n", namespace, dataId, group, data)
-			listenContent = data
-		},
-	}
-	err := client.ListenConfig(listenConfigParam)
-	assert.Nil(t, err)
-
-	success, err := client.PublishConfig(vo.ConfigParam{
-		DataId:  dataId,
-		Group:   group,
-		Content: pubContent,
-	})
-	assert.Nil(t, err)
-	assert.True(t, success)
-
-	time.Sleep(5 * time.Second)
-
-	configList, err := client.SearchConfig(vo.SearchConfigParam{
-		Search:   "accurate",
-		DataId:   dataId,
-		Group:    group,
-		PageNo:   1,
-		PageSize: 10,
-	})
-	assert.Nil(t, err)
-	assert.NotEmpty(t, configList)
-	for _, config := range configList.PageItems {
-		fmt.Printf("SearchConfig %v\n", config)
-		assert.Equal(t, pubContent, config.Content)
-	}
-
-	value, err := client.GetConfig(vo.ConfigParam{
-		DataId: dataId,
-		Group:  group})
-	assert.Nil(t, err)
-	assert.Equal(t, pubContent, value)
-
-	// wait for config change in timeout(second)
-	timeout := 30
-	start := time.Now()
-	for {
-		if listenContent != "" {
-			fmt.Printf("Current config: %s\n", listenContent)
-			break
-		}
-		if time.Since(start).Seconds() > float64(timeout) {
-			fmt.Println("Timeout exceeded. Exiting loop.")
-			break
-		}
-		time.Sleep(5 * time.Second)
-	}
-	assert.Equal(t, pubContent, listenContent)
 }

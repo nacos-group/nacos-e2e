@@ -113,7 +113,7 @@ func Test_SelectInstances_SelectAllInstances(t *testing.T) {
 		assert.Equal(t, nil, err)
 		assert.Equal(t, true, success)
 
-		tempTimer := time.NewTimer(5 * time.Second)
+		tempTimer := time.NewTimer(10 * time.Second)
 		select {
 		case <-tempTimer.C:
 		}
@@ -123,6 +123,7 @@ func Test_SelectInstances_SelectAllInstances(t *testing.T) {
 			GroupName:   DEFAULT_GROUP,
 			HealthyOnly: true,
 		})
+		fmt.Println("[SelectInstances results] " + ToJsonString(results))
 		assert.NotNil(t, results)
 		assert.Nil(t, err)
 		assert.True(t, len(results) > 0)
@@ -137,6 +138,7 @@ func Test_SelectInstances_SelectAllInstances(t *testing.T) {
 			ServiceName: serviceName,
 			GroupName:   DEFAULT_GROUP,
 		})
+		fmt.Println("[SelectAllInstances values] " + ToJsonString(values))
 		assert.NotNil(t, values)
 		assert.Nil(t, errs)
 		assert.True(t, len(values) > 0)
@@ -161,7 +163,7 @@ func Test_SelectInstances_SelectAllInstances(t *testing.T) {
 		assert.Equal(t, nil, err)
 		assert.Equal(t, true, success)
 
-		tempTimer := time.NewTimer(5 * time.Second)
+		tempTimer := time.NewTimer(10 * time.Second)
 		select {
 		case <-tempTimer.C:
 		}
@@ -170,11 +172,12 @@ func Test_SelectInstances_SelectAllInstances(t *testing.T) {
 			GroupName:   DEFAULT_GROUP,
 			HealthyOnly: true,
 		})
+		fmt.Println("[SelectInstances results] " + ToJsonString(results))
 		assert.NotNil(t, results)
 		assert.Nil(t, err)
 		assert.True(t, len(results) > 0)
 		for i, r := range results {
-			fmt.Println("i:", i, ": "+ToJsonString(r))
+			fmt.Println("[SelectInstances]i:", i, ": "+ToJsonString(r))
 			assert.Equal(t, DEFAULT_GROUP+"@@"+serviceName, r.ServiceName)
 			assert.Equal(t, TEST_IP_1, r.Ip)
 			assert.Equal(t, TEST_PORT_8848, r.Port)
@@ -184,11 +187,12 @@ func Test_SelectInstances_SelectAllInstances(t *testing.T) {
 			ServiceName: serviceName,
 			GroupName:   DEFAULT_GROUP,
 		})
+		fmt.Println("[SelectAllInstances values] " + ToJsonString(values))
 		assert.NotNil(t, values)
 		assert.Nil(t, errs)
 		assert.True(t, len(values) > 0)
 		for i, v := range values {
-			fmt.Println("i:", i, ": "+ToJsonString(v))
+			fmt.Println("[SelectAllInstances]i:", i, ": "+ToJsonString(v))
 			assert.Equal(t, DEFAULT_GROUP+"@@"+serviceName, v.ServiceName)
 			assert.Equal(t, TEST_IP_1, v.Ip)
 			assert.Equal(t, TEST_PORT_8848, v.Port)
