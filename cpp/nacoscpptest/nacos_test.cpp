@@ -55,7 +55,7 @@ TEST(ConfigTestSuit,CASE1_publishAndGetConfig) {
     string inputString = ALL_IP;
     std::cout << "ALL_IP is:" << inputString << std::endl;
     std::string nacos_server_address = extractNacosIPs(inputString);
-    std::cout << "SERVER_ADDR is:" << std::endl;
+    std::cout << "SERVER_ADDR is:" << nacos_server_address << std::endl;
 
     Properties props;
     props[PropertyKeyConst::SERVER_ADDR] = nacos_server_address ;//server address
@@ -127,7 +127,7 @@ TEST(ConfigTestSuit,CASE2_ListenAndPublisConfig) {
     string inputString = ALL_IP;
     std::cout << "ALL_IP is:" << inputString << std::endl;
     std::string nacos_server_address = extractNacosIPs(inputString);
-    std::cout << "SERVER_ADDR is:" << std::endl;
+    std::cout << "SERVER_ADDR is:" << nacos_server_address << std::endl;
 
     Properties props;
     props[PropertyKeyConst::SERVER_ADDR] = nacos_server_address;
@@ -172,7 +172,7 @@ TEST(NamingTestSuit,CASE3_registerAndGetAllInstances) {
     string inputString = ALL_IP;
     std::cout << "ALL_IP is:" << inputString << std::endl;
     std::string nacos_server_address = extractNacosIPs(inputString);
-    std::cout << "SERVER_ADDR is:" << std::endl;
+    std::cout << "SERVER_ADDR is:" << nacos_server_address << std::endl;
 
     Properties props;
     props[PropertyKeyConst::SERVER_ADDR] = nacos_server_address;
@@ -196,7 +196,7 @@ TEST(NamingTestSuit,CASE3_registerAndGetAllInstances) {
         n->registerInstance(serviceName, instance);
     }
     catch (NacosException &e) {
-        cout << "encounter exception while registering service instance, raison:" << e.what() << endl;
+        cout << "encounter exception while registering service instance, reason:" << e.what() << endl;
     }
     cout << "sleep 15s ..." << endl;
     sleep(15);
@@ -216,7 +216,7 @@ TEST(NamingTestSuit,CASE3_registerAndGetAllInstances) {
         sleep(1);
     }
     catch (NacosException &e) {
-        cout << "encounter exception while registering service instance, raison:" << e.what() << endl;
+        cout << "encounter exception while registering service instance, reason:" << e.what() << endl;
     }
     cout << "====End to test====" << endl;
 }
@@ -263,7 +263,7 @@ TEST(NamingTestSuit,CASE4_ListenAndRegisterInstance) {
     string inputString = ALL_IP;
     std::cout << "ALL_IP is:" << inputString << std::endl;
     std::string nacos_server_address = extractNacosIPs(inputString);
-    std::cout << "SERVER_ADDR is:" << std::endl;
+    std::cout << "SERVER_ADDR is:" << nacos_server_address << std::endl;
 
     Properties props;
     props[PropertyKeyConst::SERVER_ADDR] = nacos_server_address;
@@ -282,7 +282,8 @@ TEST(NamingTestSuit,CASE4_ListenAndRegisterInstance) {
     instance.ephemeral = true;
 
     cout << "Start to Listen Sevice:" << serviceName  << endl;
-    n->subscribe(serviceName, new MyServiceListener(1, serviceName, instance));
+    MyServiceListener* listener = new MyServiceListener(1, serviceName, instance);
+    n->subscribe(serviceName, listener);
 
 
     //Registers services
@@ -291,18 +292,25 @@ TEST(NamingTestSuit,CASE4_ListenAndRegisterInstance) {
         n->registerInstance(serviceName, instance);
     }
     catch (NacosException &e) {
-        cout << "encounter exception while registering service instance, raison:" << e.what() << endl;
+        cout << "encounter exception while registering service instance, reason:" << e.what() << endl;
     }
 
     cout << "sleep 30s ..." << endl;
     sleep(30);
 
     try {
+        n->unsubscribe(serviceName, listener);
+    }
+    catch (NacosException &e) {
+        cout << "encounter exception while unsubscribe service instance, reason:" << e.what() << endl;
+    }
+
+    try {
         n->deregisterInstance(serviceName, instance.ip, instance.port);
         sleep(1);
     }
     catch (NacosException &e) {
-        cout << "encounter exception while registering service instance, raison:" << e.what() << endl;
+        cout << "encounter exception while deregister service instance, reason:" << e.what() << endl;
     }
     cout << "====End to test====" << endl;
 }
