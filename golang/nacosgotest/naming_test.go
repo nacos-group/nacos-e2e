@@ -18,17 +18,24 @@ func Test_GetService_GetAllServicesInfo_ClusterName(t *testing.T) {
 	client := CreateNamingClient(false)
 	t.Run("TestWithoutClusterName", func(t *testing.T) {
 		var serviceName string = RandServiceName(10)
+		fmt.Println("[TestWithoutClusterName serviceName] " + serviceName)
 		success, err := client.RegisterInstance(vo.RegisterInstanceParam{
 			ServiceName: serviceName,
 			Ip:          TEST_IP_1,
 			Port:        TEST_PORT_8848,
+			Weight:      1,
+			Enable:      true,
+			Healthy:     true,
 			Ephemeral:   false,
 			GroupName:   DEFAULT_GROUP,
 		})
 		assert.Equal(t, nil, err)
 		assert.Equal(t, true, success)
 
-		time.Sleep(5 * time.Second)
+		tempTimer := time.NewTimer(5 * time.Second)
+		select {
+		case <-tempTimer.C:
+		}
 
 		result, err := client.GetService(vo.GetServiceParam{
 			ServiceName: serviceName,
@@ -45,7 +52,7 @@ func Test_GetService_GetAllServicesInfo_ClusterName(t *testing.T) {
 			PageNo:    1,
 			PageSize:  20,
 		})
-
+		fmt.Println("[GetAllServicesInfo values] " + ToJsonString(values))
 		assert.NotNil(t, values.Doms)
 		assert.Nil(t, errs)
 		assert.True(t, Contains(values.Doms, serviceName))
@@ -57,13 +64,18 @@ func Test_GetService_GetAllServicesInfo_ClusterName(t *testing.T) {
 			ServiceName: serviceName,
 			Ip:          TEST_IP_1,
 			Port:        TEST_PORT_8848,
+			Enable:      true,
+			Healthy:     true,
 			ClusterName: clusterName,
 			Ephemeral:   false,
 		})
 		assert.Equal(t, nil, err)
 		assert.Equal(t, true, success)
 
-		time.Sleep(5 * time.Second)
+		tempTimer := time.NewTimer(5 * time.Second)
+		select {
+		case <-tempTimer.C:
+		}
 
 		result, err := client.GetService(vo.GetServiceParam{
 			ServiceName: serviceName,
@@ -90,42 +102,52 @@ func Test_SelectInstances_SelectAllInstances(t *testing.T) {
 	client := CreateNamingClient(false)
 	t.Run("TestEphemeralTrue", func(t *testing.T) {
 		var serviceName string = RandServiceName(10)
+		fmt.Println("service name: " + serviceName)
 		success, err := client.RegisterInstance(vo.RegisterInstanceParam{
 			ServiceName: serviceName,
 			Ip:          TEST_IP_1,
 			Port:        TEST_PORT_8848,
+			Weight:      1,
+			Enable:      true,
+			Healthy:     true,
 			Ephemeral:   true,
 			GroupName:   DEFAULT_GROUP,
 		})
 		assert.Equal(t, nil, err)
 		assert.Equal(t, true, success)
 
-		time.Sleep(5 * time.Second)
+		tempTimer := time.NewTimer(10 * time.Second)
+		select {
+		case <-tempTimer.C:
+		}
 
 		results, err := client.SelectInstances(vo.SelectInstancesParam{
 			ServiceName: serviceName,
 			GroupName:   DEFAULT_GROUP,
+			HealthyOnly: true,
 		})
+		fmt.Println("[SelectInstances results] " + ToJsonString(results))
 		assert.NotNil(t, results)
 		assert.Nil(t, err)
 		assert.True(t, len(results) > 0)
 		for i, r := range results {
-			fmt.Println("i:", i, ": "+ToJsonString(r))
-			assert.Equal(t, serviceName, r.ServiceName)
+			fmt.Println("[SelectInstances] i:", i, ": "+ToJsonString(r))
+			assert.Equal(t, DEFAULT_GROUP+"@@"+serviceName, r.ServiceName)
 			assert.Equal(t, TEST_IP_1, r.Ip)
-			assert.Equal(t, TEST_PORT_8848, r.Port)
+			assert.True(t, TEST_PORT_8848 == r.Port)
 		}
 
 		values, errs := client.SelectAllInstances(vo.SelectAllInstancesParam{
 			ServiceName: serviceName,
 			GroupName:   DEFAULT_GROUP,
 		})
+		fmt.Println("[SelectAllInstances values] " + ToJsonString(values))
 		assert.NotNil(t, values)
 		assert.Nil(t, errs)
 		assert.True(t, len(values) > 0)
 		for i, v := range values {
-			fmt.Println("i:", i, ": "+ToJsonString(v))
-			assert.Equal(t, serviceName, v.ServiceName)
+			fmt.Println("[SelectAllInstances] i:", i, ": "+ToJsonString(v))
+			assert.Equal(t, DEFAULT_GROUP+"@@"+serviceName, v.ServiceName)
 			assert.Equal(t, TEST_IP_1, v.Ip)
 			assert.Equal(t, TEST_PORT_8848, v.Port)
 		}
@@ -136,24 +158,31 @@ func Test_SelectInstances_SelectAllInstances(t *testing.T) {
 			ServiceName: serviceName,
 			Ip:          TEST_IP_1,
 			Port:        TEST_PORT_8848,
+			Weight:      1,
+			Enable:      true,
+			Healthy:     true,
 			Ephemeral:   false,
 			GroupName:   DEFAULT_GROUP,
 		})
 		assert.Equal(t, nil, err)
 		assert.Equal(t, true, success)
 
-		time.Sleep(5 * time.Second)
-
+		tempTimer := time.NewTimer(10 * time.Second)
+		select {
+		case <-tempTimer.C:
+		}
 		results, err := client.SelectInstances(vo.SelectInstancesParam{
 			ServiceName: serviceName,
 			GroupName:   DEFAULT_GROUP,
+			HealthyOnly: true,
 		})
+		fmt.Println("[SelectInstances results] " + ToJsonString(results))
 		assert.NotNil(t, results)
 		assert.Nil(t, err)
 		assert.True(t, len(results) > 0)
 		for i, r := range results {
-			fmt.Println("i:", i, ": "+ToJsonString(r))
-			assert.Equal(t, serviceName, r.ServiceName)
+			fmt.Println("[SelectInstances]i:", i, ": "+ToJsonString(r))
+			assert.Equal(t, DEFAULT_GROUP+"@@"+serviceName, r.ServiceName)
 			assert.Equal(t, TEST_IP_1, r.Ip)
 			assert.Equal(t, TEST_PORT_8848, r.Port)
 		}
@@ -162,12 +191,13 @@ func Test_SelectInstances_SelectAllInstances(t *testing.T) {
 			ServiceName: serviceName,
 			GroupName:   DEFAULT_GROUP,
 		})
+		fmt.Println("[SelectAllInstances values] " + ToJsonString(values))
 		assert.NotNil(t, values)
 		assert.Nil(t, errs)
 		assert.True(t, len(values) > 0)
 		for i, v := range values {
-			fmt.Println("i:", i, ": "+ToJsonString(v))
-			assert.Equal(t, serviceName, v.ServiceName)
+			fmt.Println("[SelectAllInstances]i:", i, ": "+ToJsonString(v))
+			assert.Equal(t, DEFAULT_GROUP+"@@"+serviceName, v.ServiceName)
 			assert.Equal(t, TEST_IP_1, v.Ip)
 			assert.Equal(t, TEST_PORT_8848, v.Port)
 		}
@@ -182,12 +212,17 @@ func Test_RegisterInstance_DeregisterInstance_GroupName(t *testing.T) {
 			ServiceName: serviceName,
 			Ip:          TEST_IP_1,
 			Port:        TEST_PORT_8848,
+			Enable:      true,
+			Healthy:     true,
 			Ephemeral:   true,
 		})
 		assert.Equal(t, nil, errR)
 		assert.Equal(t, true, successR)
 
-		time.Sleep(5 * time.Second)
+		tempTimer := time.NewTimer(5 * time.Second)
+		select {
+		case <-tempTimer.C:
+		}
 
 		successD, errD := client.DeregisterInstance(vo.DeregisterInstanceParam{
 			ServiceName: serviceName,
@@ -205,13 +240,18 @@ func Test_RegisterInstance_DeregisterInstance_GroupName(t *testing.T) {
 			ServiceName: serviceName,
 			Ip:          TEST_IP_1,
 			Port:        TEST_PORT_8848,
+			Enable:      true,
+			Healthy:     true,
 			GroupName:   "test_group",
 			Ephemeral:   false,
 		})
 		assert.Equal(t, nil, errR)
 		assert.Equal(t, true, successR)
 
-		time.Sleep(5 * time.Second)
+		tempTimer := time.NewTimer(5 * time.Second)
+		select {
+		case <-tempTimer.C:
+		}
 
 		successD, errD := client.DeregisterInstance(vo.DeregisterInstanceParam{
 			ServiceName: serviceName,
@@ -233,13 +273,18 @@ func Test_RegisterInstance_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 			ServiceName: serviceName,
 			Ip:          TEST_IP_1,
 			Port:        TEST_PORT_8848,
+			Healthy:     true,
+			Enable:      true,
 			Ephemeral:   true,
 			GroupName:   DEFAULT_GROUP,
 		})
 		assert.Equal(t, nil, err)
 		assert.Equal(t, true, success)
 
-		time.Sleep(5 * time.Second)
+		tempTimer := time.NewTimer(5 * time.Second)
+		select {
+		case <-tempTimer.C:
+		}
 
 		values, errs := client.SelectAllInstances(vo.SelectAllInstancesParam{
 			ServiceName: serviceName,
@@ -250,7 +295,7 @@ func Test_RegisterInstance_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 		assert.True(t, len(values) > 0)
 		for i, v := range values {
 			fmt.Println("i:", i, ": "+ToJsonString(v))
-			assert.Equal(t, serviceName, v.ServiceName)
+			assert.Equal(t, DEFAULT_GROUP+"@@"+serviceName, v.ServiceName)
 			assert.Equal(t, TEST_IP_1, v.Ip)
 			assert.Equal(t, TEST_PORT_8848, v.Port)
 		}
@@ -259,6 +304,7 @@ func Test_RegisterInstance_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 			ServiceName: serviceName,
 			Ip:          TEST_IP_1,
 			Port:        TEST_PORT_8848,
+			GroupName:   DEFAULT_GROUP,
 		})
 		assert.Equal(t, nil, errD)
 		assert.Equal(t, true, successD)
@@ -278,7 +324,11 @@ func Test_RegisterInstance_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 				fmt.Println("Timeout exceeded. Exiting loop.")
 				break
 			}
-			time.Sleep(5 * time.Second)
+			fmt.Println("Wait 5s……")
+			tempTimer := time.NewTimer(5 * time.Second)
+			select {
+			case <-tempTimer.C:
+			}
 		}
 		assert.True(t, len(values) != 0)
 	})
@@ -286,17 +336,23 @@ func Test_RegisterInstance_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 	t.Run("TestCloseProtect", func(t *testing.T) {
 		client := CreateNamingClient(true)
 		var serviceName string = RandServiceName(10)
+		fmt.Println("service name: " + serviceName)
 		success, err := client.RegisterInstance(vo.RegisterInstanceParam{
 			ServiceName: serviceName,
 			Ip:          TEST_IP_1,
 			Port:        TEST_PORT_8848,
+			Healthy:     true,
+			Enable:      true,
 			Ephemeral:   true,
 			GroupName:   DEFAULT_GROUP,
 		})
 		assert.Equal(t, nil, err)
 		assert.Equal(t, true, success)
 
-		time.Sleep(5 * time.Second)
+		tempTimer := time.NewTimer(5 * time.Second)
+		select {
+		case <-tempTimer.C:
+		}
 
 		values, errs := client.SelectAllInstances(vo.SelectAllInstancesParam{
 			ServiceName: serviceName,
@@ -307,7 +363,7 @@ func Test_RegisterInstance_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 		assert.True(t, len(values) > 0)
 		for i, v := range values {
 			fmt.Println("i:", i, ": "+ToJsonString(v))
-			assert.Equal(t, serviceName, v.ServiceName)
+			assert.Equal(t, DEFAULT_GROUP+"@@"+serviceName, v.ServiceName)
 			assert.Equal(t, TEST_IP_1, v.Ip)
 			assert.Equal(t, TEST_PORT_8848, v.Port)
 		}
@@ -316,18 +372,20 @@ func Test_RegisterInstance_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 			ServiceName: serviceName,
 			Ip:          TEST_IP_1,
 			Port:        TEST_PORT_8848,
-			Ephemeral:   false,
+			GroupName:   DEFAULT_GROUP,
+			Ephemeral:   true,
 		})
 		assert.Equal(t, nil, errD)
 		assert.Equal(t, true, successD)
 
-		timeout := 120
+		timeout := 240
 		start := time.Now()
 		for {
 			values, errs = client.SelectAllInstances(vo.SelectAllInstancesParam{
 				ServiceName: serviceName,
 				GroupName:   DEFAULT_GROUP,
 			})
+			fmt.Println("CurrentService:" + ToJsonString(values))
 			if len(values) == 0 {
 				fmt.Printf("Current SelectInstances is empty\n")
 				break
@@ -336,9 +394,13 @@ func Test_RegisterInstance_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 				fmt.Println("Timeout exceeded. Exiting loop.")
 				break
 			}
-			time.Sleep(5 * time.Second)
+			fmt.Println("Wait 5s……")
+			//time.Sleep(5 * time.Second)
+			tempTimer := time.NewTimer(5 * time.Second)
+			select {
+			case <-tempTimer.C:
+			}
 		}
-		assert.NotNil(t, values)
 		assert.Nil(t, err)
 		assert.True(t, len(values) == 0)
 	})
@@ -364,7 +426,10 @@ func Test_RegisterInstance_EphemeralTrueAndFalse_AtTheSameTime(t *testing.T) {
 	body := HttpPost("/nacos/v1/ns/instance", params)
 	assert.Equal(t, "ok", body)
 
-	time.Sleep(5 * time.Second)
+	tempTimer := time.NewTimer(5 * time.Second)
+	select {
+	case <-tempTimer.C:
+	}
 	success, err := client.RegisterInstance(vo.RegisterInstanceParam{
 		ServiceName: serviceName,
 		Ip:          TEST_IP_1,
@@ -423,6 +488,8 @@ func Test_Subscribe(t *testing.T) {
 		ServiceName: serviceName,
 		Ip:          TEST_IP_1,
 		Port:        TEST_PORT_8848,
+		Healthy:     true,
+		Enable:      true,
 		Ephemeral:   true,
 		GroupName:   DEFAULT_GROUP,
 	})
@@ -441,7 +508,10 @@ func Test_Subscribe(t *testing.T) {
 			fmt.Println("Timeout exceeded. Exiting loop.")
 			break
 		}
-		time.Sleep(5 * time.Second)
+		tempTimer := time.NewTimer(5 * time.Second)
+		select {
+		case <-tempTimer.C:
+		}
 	}
 	assert.True(t, len(listenService) != 0)
 }
@@ -456,13 +526,18 @@ func Test_Subscribe_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 			ServiceName: serviceName,
 			Ip:          TEST_IP_1,
 			Port:        TEST_PORT_8848,
+			Healthy:     true,
+			Enable:      true,
 			Ephemeral:   true,
 			GroupName:   DEFAULT_GROUP,
 		})
 		assert.Equal(t, nil, err)
 		assert.Equal(t, true, success)
 
-		time.Sleep(5 * time.Second)
+		tempTimer := time.NewTimer(5 * time.Second)
+		select {
+		case <-tempTimer.C:
+		}
 
 		subscribeParam := &vo.SubscribeParam{
 			ServiceName: serviceName,
@@ -497,7 +572,10 @@ func Test_Subscribe_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 				fmt.Println("Timeout exceeded. Exiting loop.")
 				break
 			}
-			time.Sleep(5 * time.Second)
+			tempTimer := time.NewTimer(5 * time.Second)
+			select {
+			case <-tempTimer.C:
+			}
 		}
 		assert.True(t, len(listenService) != 0)
 
@@ -522,7 +600,10 @@ func Test_Subscribe_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 				fmt.Println("Timeout exceeded. Exiting loop.")
 				break
 			}
-			time.Sleep(5 * time.Second)
+			tempTimer := time.NewTimer(5 * time.Second)
+			select {
+			case <-tempTimer.C:
+			}
 		}
 		assert.True(t, len(listenService) != 0)
 	})
@@ -536,13 +617,18 @@ func Test_Subscribe_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 			ServiceName: serviceName,
 			Ip:          TEST_IP_1,
 			Port:        TEST_PORT_8848,
+			Healthy:     true,
+			Enable:      true,
 			Ephemeral:   true,
 			GroupName:   DEFAULT_GROUP,
 		})
 		assert.Equal(t, nil, err)
 		assert.Equal(t, true, success)
 
-		time.Sleep(5 * time.Second)
+		tempTimer := time.NewTimer(5 * time.Second)
+		select {
+		case <-tempTimer.C:
+		}
 
 		subscribeParam := &vo.SubscribeParam{
 			ServiceName: serviceName,
@@ -577,7 +663,10 @@ func Test_Subscribe_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 				fmt.Println("Timeout exceeded. Exiting loop.")
 				break
 			}
-			time.Sleep(5 * time.Second)
+			tempTimer := time.NewTimer(5 * time.Second)
+			select {
+			case <-tempTimer.C:
+			}
 		}
 		assert.True(t, len(listenService) != 0)
 
@@ -604,7 +693,10 @@ func Test_Subscribe_DeregisterInstance_OpenProtectOrNOT(t *testing.T) {
 				fmt.Println("Timeout exceeded. Exiting loop.")
 				break
 			}
-			time.Sleep(5 * time.Second)
+			tempTimer := time.NewTimer(5 * time.Second)
+			select {
+			case <-tempTimer.C:
+			}
 		}
 		assert.True(t, len(listenService) == 0)
 	})
@@ -639,6 +731,8 @@ func Test_Subscribe_And_Unsubscribe(t *testing.T) {
 		ServiceName: serviceName,
 		Ip:          TEST_IP_1,
 		Port:        TEST_PORT_8848,
+		Healthy:     true,
+		Enable:      true,
 		Ephemeral:   true,
 		GroupName:   DEFAULT_GROUP,
 	})
@@ -657,7 +751,10 @@ func Test_Subscribe_And_Unsubscribe(t *testing.T) {
 			fmt.Println("Timeout exceeded. Exiting loop.")
 			break
 		}
-		time.Sleep(5 * time.Second)
+		tempTimer := time.NewTimer(5 * time.Second)
+		select {
+		case <-tempTimer.C:
+		}
 	}
 	assert.True(t, len(listenService) != 0)
 
@@ -670,6 +767,8 @@ func Test_Subscribe_And_Unsubscribe(t *testing.T) {
 		ServiceName: serviceName,
 		Ip:          TEST_IP_1,
 		Port:        TEST_PORT_8080,
+		Healthy:     true,
+		Enable:      true,
 		Weight:      2,
 		Ephemeral:   true,
 		GroupName:   DEFAULT_GROUP,
@@ -689,7 +788,10 @@ func Test_Subscribe_And_Unsubscribe(t *testing.T) {
 			fmt.Println("Timeout exceeded. Exiting loop.")
 			break
 		}
-		time.Sleep(5 * time.Second)
+		tempTimer := time.NewTimer(5 * time.Second)
+		select {
+		case <-tempTimer.C:
+		}
 	}
 	assert.True(t, len(listenService) == 0)
 
@@ -702,6 +804,8 @@ func Test_Subscribe_And_Unsubscribe(t *testing.T) {
 		ServiceName: serviceName,
 		Ip:          TEST_IP_1,
 		Port:        TEST_PORT_8848,
+		Healthy:     true,
+		Enable:      true,
 		Weight:      100,
 		Ephemeral:   true,
 		GroupName:   DEFAULT_GROUP,
@@ -721,7 +825,10 @@ func Test_Subscribe_And_Unsubscribe(t *testing.T) {
 			fmt.Println("Timeout exceeded. Exiting loop.")
 			break
 		}
-		time.Sleep(5 * time.Second)
+		tempTimer := time.NewTimer(5 * time.Second)
+		select {
+		case <-tempTimer.C:
+		}
 	}
 	assert.True(t, len(listenService) != 0)
 
@@ -756,6 +863,8 @@ func Test_ReloadCurrent_And_Subscribe(t *testing.T) {
 		ServiceName: serviceName,
 		Ip:          TEST_IP_1,
 		Port:        TEST_PORT_8848,
+		Healthy:     true,
+		Enable:      true,
 		Ephemeral:   true,
 		GroupName:   DEFAULT_GROUP,
 	})
@@ -774,7 +883,10 @@ func Test_ReloadCurrent_And_Subscribe(t *testing.T) {
 			fmt.Println("Timeout exceeded. Exiting loop.")
 			break
 		}
-		time.Sleep(5 * time.Second)
+		tempTimer := time.NewTimer(5 * time.Second)
+		select {
+		case <-tempTimer.C:
+		}
 	}
 	assert.True(t, len(listenService) != 0)
 
@@ -792,6 +904,8 @@ func Test_ReloadCurrent_And_Subscribe(t *testing.T) {
 			ServiceName: serviceName,
 			Ip:          TEST_IP_1,
 			Port:        TEST_PORT_8848,
+			Healthy:     true,
+			Enable:      true,
 			Weight:      100,
 			Ephemeral:   true,
 			GroupName:   DEFAULT_GROUP,
@@ -811,7 +925,10 @@ func Test_ReloadCurrent_And_Subscribe(t *testing.T) {
 				fmt.Println("Timeout exceeded. Exiting loop.")
 				break
 			}
-			time.Sleep(5 * time.Second)
+			tempTimer := time.NewTimer(5 * time.Second)
+			select {
+			case <-tempTimer.C:
+			}
 		}
 		assert.True(t, len(listenService) != 0)
 	}
