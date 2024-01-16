@@ -18,10 +18,12 @@ func Test_GetService_GetAllServicesInfo_ClusterName(t *testing.T) {
 	client := CreateNamingClient(false)
 	t.Run("TestWithoutClusterName", func(t *testing.T) {
 		var serviceName string = RandServiceName(10)
+		fmt.Println("[TestWithoutClusterName serviceName] " + serviceName)
 		success, err := client.RegisterInstance(vo.RegisterInstanceParam{
 			ServiceName: serviceName,
 			Ip:          TEST_IP_1,
 			Port:        TEST_PORT_8848,
+			Weight:      1,
 			Enable:      true,
 			Healthy:     true,
 			Ephemeral:   false,
@@ -50,7 +52,7 @@ func Test_GetService_GetAllServicesInfo_ClusterName(t *testing.T) {
 			PageNo:    1,
 			PageSize:  20,
 		})
-
+		fmt.Println("[GetAllServicesInfo values] " + ToJsonString(values))
 		assert.NotNil(t, values.Doms)
 		assert.Nil(t, errs)
 		assert.True(t, Contains(values.Doms, serviceName))
