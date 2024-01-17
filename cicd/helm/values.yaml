@@ -84,7 +84,7 @@ resources:
   #   cpu: 100m
   #   memory: 128Mi
   requests:
-    cpu: 500m
+    cpu: 1000m
     memory: 2Gi
 annotations: { }
 
