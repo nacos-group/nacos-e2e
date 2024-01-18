@@ -40,19 +40,22 @@ const TEST_PORT_8848 uint64 = 8848
 func init() {
 	var ALL_IP = os.Getenv("ALL_IP")
 	pairs := strings.Split(ALL_IP, ",")
-	firstPair := ""
-	firstValue := ""
+
+	addresses := []string{}
+	oneValue := ""
 	for _, pair := range pairs {
+		pair = strings.TrimSpace(pair)
 		if strings.HasPrefix(pair, "nacos-") {
-			firstPair = pair
-			firstValue = strings.Split(pair, ":")[1]
-			break
+			address := strings.Split(pair, ":")[1] + ":8848"
+			addresses = append(addresses, address)
+			oneValue = strings.Split(pair, ":")[1]
 		}
 	}
-	fmt.Println("First pair:", firstPair)
-	fmt.Println("First value:", firstValue)
 
-	serverList = firstValue
+	serverList := strings.Join(addresses, ",")
+	fmt.Println("serverList:", serverList)
+	fmt.Println("one value:", oneValue)
+
 	Ns = os.Getenv("namespace")
 	Ak = os.Getenv("ACCESS_KEY")
 	Sk = os.Getenv("SECRET_KEY")
@@ -63,7 +66,7 @@ func init() {
 	//Ak = "XXXXX"
 	//Sk = "XXXXX"
 
-	curServer = "http://" + serverList + ":8848"
+	curServer = "http://" + oneValue + ":8848"
 	fmt.Printf("init: serverList %s, curServer %s, ns %s, Ak %s, Sk %s\n", serverList, curServer, Ns, Ak, Sk)
 }
 
