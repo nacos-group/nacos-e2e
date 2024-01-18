@@ -55,7 +55,7 @@ func init() {
 		}
 	}
 
-	serverList := strings.Join(addresses, ",")
+	serverList = strings.Join(addresses, ",")
 	fmt.Println("serverList:", serverList)
 	fmt.Println("one value:", oneValue)
 
