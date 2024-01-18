@@ -38,9 +38,12 @@ const TEST_PORT_8080 = 8080
 const TEST_PORT_8848 uint64 = 8848
 
 func init() {
-	var ALL_IP = os.Getenv("ALL_IP")
-	pairs := strings.Split(ALL_IP, ",")
+	fmt.Println("init env value")
 
+	var ALL_IP = os.Getenv("ALL_IP")
+	fmt.Println("ALL_IP:", ALL_IP)
+
+	pairs := strings.Split(ALL_IP, ",")
 	addresses := []string{}
 	oneValue := ""
 	for _, pair := range pairs {
