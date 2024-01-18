@@ -50,7 +50,7 @@ func Test_GetService_GetAllServicesInfo_ClusterName(t *testing.T) {
 			NameSpace: Ns,
 			GroupName: DEFAULT_GROUP,
 			PageNo:    1,
-			PageSize:  20,
+			PageSize:  10000,
 		})
 		fmt.Println("[GetAllServicesInfo values] " + ToJsonString(values))
 		assert.NotNil(t, values.Doms)
