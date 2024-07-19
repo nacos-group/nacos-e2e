@@ -84,8 +84,8 @@ resources:
   #   cpu: 100m
   #   memory: 128Mi
   requests:
-    cpu: 4000m
-    memory: 8Gi
+    cpu: 500m
+    memory: 2Gi
 annotations: { }
 
 nodeSelector: { }
