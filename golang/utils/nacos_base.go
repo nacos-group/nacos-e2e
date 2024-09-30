@@ -38,21 +38,27 @@ const TEST_PORT_8080 = 8080
 const TEST_PORT_8848 uint64 = 8848
 
 func init() {
+	fmt.Println("init env value")
+
 	var ALL_IP = os.Getenv("ALL_IP")
+	fmt.Println("ALL_IP:", ALL_IP)
+
 	pairs := strings.Split(ALL_IP, ",")
-	firstPair := ""
-	firstValue := ""
+	addresses := []string{}
+	oneValue := ""
 	for _, pair := range pairs {
+		pair = strings.TrimSpace(pair)
 		if strings.HasPrefix(pair, "nacos-") {
-			firstPair = pair
-			firstValue = strings.Split(pair, ":")[1]
-			break
+			address := strings.Split(pair, ":")[1] + ":8848"
+			addresses = append(addresses, address)
+			oneValue = strings.Split(pair, ":")[1]
 		}
 	}
-	fmt.Println("First pair:", firstPair)
-	fmt.Println("First value:", firstValue)
 
-	serverList = firstValue
+	serverList = strings.Join(addresses, ",")
+	fmt.Println("serverList:", serverList)
+	fmt.Println("one value:", oneValue)
+
 	Ns = os.Getenv("namespace")
 	Ak = os.Getenv("ACCESS_KEY")
 	Sk = os.Getenv("SECRET_KEY")
@@ -63,7 +69,7 @@ func init() {
 	//Ak = "XXXXX"
 	//Sk = "XXXXX"
 
-	curServer = "http://" + serverList + ":8848"
+	curServer = "http://" + oneValue + ":8848"
 	fmt.Printf("init: serverList %s, curServer %s, ns %s, Ak %s, Sk %s\n", serverList, curServer, Ns, Ak, Sk)
 }
 
@@ -78,7 +84,24 @@ func CreateConfigClient() config_client.IConfigClient {
 		constant.WithCacheDir("/tmp/nacos/cache"),
 		constant.WithLogLevel("debug"),
 	)
-	var serverConfig = []constant.ServerConfig{*constant.NewServerConfig(serverList, 8848, constant.WithContextPath("/nacos"))}
+	//var serverConfig = []constant.ServerConfig{*constant.NewServerConfig(serverList, 8848, constant.WithContextPath("/nacos"))}
+
+	serverConfig := []constant.ServerConfig{}
+	servers := strings.Split(serverList, ",")
+	for _, server := range servers {
+		serverParts := strings.Split(server, ":")
+		ip := serverParts[0]
+		//port := serverParts[1]
+		config := constant.ServerConfig{
+			IpAddr: ip,
+			Port:   8848,
+		}
+		serverConfig = append(serverConfig, config)
+	}
+	for _, config := range serverConfig {
+		fmt.Println("IpAddr:", config.IpAddr)
+		fmt.Println("Port:", config.Port)
+	}
 
 	client, err := clients.NewConfigClient(
 		vo.NacosClientParam{
@@ -155,7 +178,24 @@ func CreateNamingClient(updateCacheWhenEmpty bool) naming_client.INamingClient {
 		constant.WithCacheDir("/tmp/nacos/cache"),
 		constant.WithLogLevel("debug"),
 	)
-	var serverConfig = []constant.ServerConfig{*constant.NewServerConfig(serverList, 8848, constant.WithContextPath("/nacos"))}
+	//var serverConfig = []constant.ServerConfig{*constant.NewServerConfig(serverList, 8848, constant.WithContextPath("/nacos"))}
+
+	serverConfig := []constant.ServerConfig{}
+	servers := strings.Split(serverList, ",")
+	for _, server := range servers {
+		serverParts := strings.Split(server, ":")
+		ip := serverParts[0]
+		//port := serverParts[1]
+		config := constant.ServerConfig{
+			IpAddr: ip,
+			Port:   8848,
+		}
+		serverConfig = append(serverConfig, config)
+	}
+	for _, config := range serverConfig {
+		fmt.Println("IpAddr:", config.IpAddr)
+		fmt.Println("Port:", config.Port)
+	}
 
 	var clientParam = vo.NacosClientParam{
 		ClientConfig:  &clientConfig,

@@ -23,17 +23,18 @@ logger.setLevel(logging.DEBUG)
 env_dist = os.environ
 def getServerAddress():
     ips = env_dist.get("ALL_IP", "")
-    logger.info("ALL_IP:"+ips)
-    address = ""
+    logger.info("ALL_IP:" + ips)
+    addresses = []
     if ips:
         pairs = ips.split(",")
         for pair in pairs:
             if pair.startswith("nacos-"):
-                address = pair.split(":")[1]+":8848"
-                break
-    if not address:
-        address = "127.0.0.1:8848"
-    logger.info("address:"+address)
+                address = pair.split(":")[1] + ":8848"
+                addresses.append(address)
+    if not addresses:
+        addresses.append("127.0.0.1:8848")
+    address = ",".join(addresses)
+    logger.info("address:" + address)
     return address
 
 SERVER_ADDRESSES = getServerAddress()
