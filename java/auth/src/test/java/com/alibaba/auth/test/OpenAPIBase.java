@@ -184,4 +184,61 @@ public class OpenAPIBase extends BaseOperate {
         }
         return false;
     }
+
+    public static String getNamespaces(String url, String accessToken, String namespaceId) throws Exception {
+        url = url + "/nacos/v1/console/namespaces";
+
+        Map<String, String> params = new HashMap<>();
+        params.put("accessToken", accessToken);
+        if (namespaceId != null) {
+            params.put("show", "all");
+            params.put("namespaceId", namespaceId);
+        }
+
+        String result = OkHttpUtils.get(url, params);
+        return result;
+    }
+
+    public static Boolean addNamespaces(String url, String accessToken, String customNamespaceId, String namespaceName, String namespaceDesc) throws Exception {
+        url = url + "/nacos/v1/console/namespaces";
+
+        Map<String, String> params = new HashMap<>();
+        params.put("accessToken", accessToken);
+        params.put("customNamespaceId", customNamespaceId);
+        params.put("namespaceName", namespaceName);
+        params.put("namespaceDesc", namespaceDesc);
+        String result = OkHttpUtils.post(url, params);
+        if (StringUtils.isNotBlank(result) && result.contains("true")) {
+            return true;
+        }
+        return false;
+    }
+
+    public static Boolean modifyNamespaces(String url, String accessToken, String namespace, String namespaceName, String namespaceDesc) throws Exception {
+        url = url + "/nacos/v1/console/namespaces";
+
+        Map<String, String> params = new HashMap<>();
+        params.put("accessToken", accessToken);
+        params.put("namespace", namespace);
+        params.put("namespaceShowName", namespaceName);
+        params.put("namespaceDesc", namespaceDesc);
+        String result = OkHttpUtils.put(url, params);
+        if (StringUtils.isNotBlank(result) && result.contains("true")) {
+            return true;
+        }
+        return false;
+    }
+
+    public static Boolean removeNamespaces(String url, String accessToken, String namespaceId) throws Exception {
+        url = url + "/nacos/v1/console/namespaces";
+
+        Map<String, String> params = new HashMap<>();
+        params.put("accessToken", accessToken);
+        params.put("namespaceId", namespaceId);
+        String result = OkHttpUtils.delete(url, params);
+        if (StringUtils.isNotBlank(result) && result.contains("true")) {
+            return true;
+        }
+        return false;
+    }
 }
