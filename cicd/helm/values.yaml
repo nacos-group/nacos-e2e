@@ -26,6 +26,12 @@ nacos:
   serverPort: 8848
   health:
     enabled: false
+  auth:
+    enabled: false
+    token: bmFjb3MxMjM0NU5BQ09TMTIzNDVuYWNvczEyMzQ1TkFDT1MxMjM0NW5hY29zMTIzNDVOQUNPUzEyMzQ1Cg==
+    identity:
+      key: nacos
+      value: nacos
   storage:
 #    type: embedded
     type: mysql
