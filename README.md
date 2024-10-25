@@ -3,15 +3,17 @@
 *  **Fork 仓库**：首先你需要在 GitHub 上 Fork `nacos-group/nacos-e2e` 仓库到你自己的账号下。 
 
 *  **克隆仓库**：将 Fork 后的仓库克隆到本地。
-   
 
-    git clone https://github.com/your-username/nacos-e2e.git
-    cd nacos-e2e 
+```
+git clone https://github.com/your-username/nacos-e2e.git
+cd nacos-e2e 
+```
 
 *  **设置上游仓库**：为了能够拉取官方最新的更新，建议设置上游仓库。
 
-
-    git remote add upstream https://github.com/nacos-group/nacos-e2e.git
+```
+git remote add upstream https://github.com/nacos-group/nacos-e2e.git
+```
 
 ### 2. 理解现有结构
    查看项目的目录结构，目前主要按客户端测试语言类型和CI部署Nacos的依赖区分，其中java按客户端版本范围和鉴权用例区分
@@ -52,19 +54,19 @@
   *  @Test 注解的方法中进行用例逻辑编写，在@DisplayName 中描述当前用例测试的场景
 
 示例代码：
+```
+package com.alibaba.nacos.config;
 
-    package com.alibaba.nacos.config;
-    
-    import com.alibaba.nacos.util.RandomUtils;
-    import org.junit.jupiter.api.*;
-    import org.slf4j.Logger;
-    import org.slf4j.LoggerFactory;
-    
-    import java.util.HashMap;
-    import java.util.Iterator;
-    import java.util.Map;
-    
-    public class YourFeatureTest extends ConfigBase{
+import com.alibaba.nacos.util.RandomUtils;
+import org.junit.jupiter.api.*;
+        import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
+public class YourFeatureTest extends ConfigBase{
     private static final Logger log = LoggerFactory.getLogger(ConfigNormalTest.class);
     private String dataId;
     private String group;
@@ -72,38 +74,38 @@
     private Map<String ,String> cleanConfigMap = new HashMap<>();
     @BeforeEach
     public void setUp() throws Exception{
-    dataId = "config.test." + RandomUtils.getStringWithCharacter(10);
-    group = DEFAULT_GROUP;
+        dataId = "config.test." + RandomUtils.getStringWithCharacter(10);
+        group = DEFAULT_GROUP;
     }
-    
-        @AfterEach
-        public void tearDown() throws Exception {
-            Iterator<Map.Entry<String, String>> iterator = cleanConfigMap.entrySet().iterator();
-            while (iterator.hasNext()) {
-                Map.Entry<String, String> entry = iterator.next();
-                Boolean result = config.removeConfig(entry.getKey(), entry.getValue());
-                if (result) {
-                    iterator.remove();
-                }
+
+    @AfterEach
+    public void tearDown() throws Exception {
+        Iterator<Map.Entry<String, String>> iterator = cleanConfigMap.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, String> entry = iterator.next();
+            Boolean result = config.removeConfig(entry.getKey(), entry.getValue());
+            if (result) {
+                iterator.remove();
             }
         }
-    
-        @Test
-        @DisplayName("Publish normal character and sleep 3000ms to get config, expect get correct config content.")
-        public void testPublishAndGetConfig_normalCharacter() throws Exception{
-            content = RandomUtils.getStringWithCharacter(20);
-            boolean result = config.publishConfig(dataId, group, content);
-            log.info("publishConfig dataId:{}, group:{}, result:{}", dataId, group, result);
-            Assertions.assertTrue(result, "publishConfig check fail");
-            cleanConfigMap.put(dataId, group);
-            Thread.sleep(TIME_OUT);
-    
-            String value = config.getConfig(dataId, group, TIME_OUT);
-            log.info("getConfig dataId:{}, group:{}, value:{}", dataId, group, value);
-            Assertions.assertEquals(content, value, "getConfig value is not expect one");
-        }
-    
     }
+
+    @Test
+    @DisplayName("Publish normal character and sleep 3000ms to get config, expect get correct config content.")
+    public void testPublishAndGetConfig_normalCharacter() throws Exception{
+        content = RandomUtils.getStringWithCharacter(20);
+        boolean result = config.publishConfig(dataId, group, content);
+        log.info("publishConfig dataId:{}, group:{}, result:{}", dataId, group, result);
+        Assertions.assertTrue(result, "publishConfig check fail");
+        cleanConfigMap.put(dataId, group);
+        Thread.sleep(TIME_OUT);
+
+        String value = config.getConfig(dataId, group, TIME_OUT);
+        log.info("getConfig dataId:{}, group:{}, value:{}", dataId, group, value);
+        Assertions.assertEquals(content, value, "getConfig value is not expect one");
+    }
+}
+```
 
 ### 4. 运行测试
 
@@ -111,22 +113,25 @@
 
 * 用例执行命令：
     
-    
-    mvn clean test -B -Dtest=YourFeatureTest -DserverList=127.0.0.1
-  
+```
+mvn clean test -B -Dtest=YourFeatureTest -DserverList=127.0.0.1
+```
+
 其他语言下的用例执行，可以参考每种语言的module下bin目录的run.sh文件，在语言环境具备情况下，安装必要的包和设置环境变量后执行，亦或安装相应的编译器本地执行
 
 ### 5. 提交更改
 * **提交代码**：将你的更改提交到本地仓库。
-       
 
-    git add .
-    git commit -m "Add new e2e test for your feature"
+```
+git add .
+
+git commit -m "Add new e2e test for your feature"
+```
 
 * **推送到远程仓库**：将更改推送到你的 GitHub 仓库。
-       
-
-    git push origin main
+```
+git push origin main
+```
 
 ### 6. 创建 Pull Request
 
@@ -139,6 +144,7 @@
 
 ### 8. Nacos主仓库CI能力
 1. 成功地向 `nacos-group/nacos-e2e` 项目中新增测试用例后，用例最终在 `alibaba/nacos` 仓库的actions中触发运行。
-2. CI通过使用阿里云ASK能力为每次PUSH和PR提供一个独立的Nacos环境进行E2E测试，部署使用 `nacos-group/nacos-e2e` 仓库中的helm chart(nacos-e2e/cicd)，镜像为当次提交的代码。由于安全性考虑，将PR和PUSH动作的CI分离为两个流水线。
-3. 测试报告可视化，每次E2E测试的报告在CI当次执行页面上可视化展示，无需查看日志，方便排查。
-4. 支持兼容性测试，并发执行多OS和JDK版本的测试。
+2. CI通过使用阿里云ASK能力为每次PUSH和PR提供一个独立的Nacos环境进行E2E测试，部署使用 `nacos-group/nacos-e2e` 仓库中的helm chart(nacos-e2e/cicd)，镜像为当次提交的代码。
+3. 由于安全性考虑，将PR和PUSH动作的CI分离为两个流水线。PR触发E2E测试后回写评论至PR中，可以关联跳转到对应的测试报告。
+4. 测试报告可视化，每次E2E测试的报告在CI当次执行页面上可视化展示，无需查看日志，方便排查。
+5. 支持兼容性测试，并发执行多OS和JDK版本的测试。
