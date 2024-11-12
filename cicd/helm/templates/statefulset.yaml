@@ -88,6 +88,14 @@ spec:
               value: {{ .Values.nacos.serverPort | quote }}
             - name: PREFER_HOST_MODE
               value: {{ .Values.nacos.preferhostmode | quote }}
+            - name: NACOS_AUTH_ENABLE
+              value: {{ .Values.nacos.auth.enabled | quote }}
+            - name: NACOS_AUTH_TOKEN
+              value: {{ .Values.nacos.auth.token | quote }}
+            - name: NACOS_AUTH_IDENTITY_KEY
+              value: {{ .Values.nacos.auth.identity.key | quote }}
+            - name: NACOS_AUTH_IDENTITY_VALUE
+              value: {{ .Values.nacos.auth.identity.value | quote }}
             {{- if eq .Values.global.mode "standalone" }}
             - name: MODE
               value: "standalone"

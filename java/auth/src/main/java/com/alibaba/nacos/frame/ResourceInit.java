@@ -93,46 +93,46 @@ public class ResourceInit {
         if (allIp != null) {
             String[] allPodInfos = allIp.split(",");
             for (String podInfo : allPodInfos) {
-                serverIpList.add(podInfo.substring(podInfo.indexOf(":") + 1));
+                if (podInfo.startsWith("nacos-")) {
+                    serverIpList.add(podInfo.substring(podInfo.indexOf(":") + 1));
+                }
             }
             if (serverIpList.isEmpty()) {
                 log.warn("INIT- Get serverList from external is empty");
                 serverList = System.getenv("serverList") == null ?
-                    System.getProperty("serverList", properties.getProperty("serverList")) :
-                    System.getenv("serverList");
+                        System.getProperty("serverList", properties.getProperty("serverList")) :
+                        System.getenv("serverList");
+            } else {
+                String tempServerList = "";
+                if ("serverAddr".equals(mode)) {
+                    for (String server : serverIpList) {
+                        if (!server.contains(":8848")) {
+                            tempServerList += server + ":8848" + ",";
+                        } else {
+                            tempServerList += server + ",";
+                        }
+                    }
+                } else {
+                    for (String server : serverIpList) {
+                        if (server.contains(":8848")) {
+                            tempServerList += server.split(":")[0] + ",";
+                        } else {
+                            tempServerList += server + ",";
+                        }
+                    }
+                }
+                serverList = tempServerList.endsWith(",") ? tempServerList.substring(0,
+                        tempServerList.length()-1) : tempServerList;
             }
         } else {
             log.info("INIT- Get ALL_IP is null, use local info");
             serverList = System.getenv("serverList") == null ?
-                System.getProperty("serverList", properties.getProperty("serverList")) :
-                System.getenv("serverList");
+                    System.getProperty("serverList", properties.getProperty("serverList")) :
+                    System.getenv("serverList");
         }
         if (serverList == null) {
             log.error("INIT- Get serverList is null");
             System.exit(-1);
-        } else {
-            String[] arr = serverList.split(",");
-            serverIpList = Arrays.asList(arr);
-            String tempServerList = "";
-            if ("serverAddr".equals(mode)) {
-                for (String server : serverIpList) {
-                    if (!server.contains(":8848")) {
-                        tempServerList += server + ":8848" + ",";
-                    } else {
-                        tempServerList += server + ",";
-                    }
-                }
-            } else {
-                for (String server : serverIpList) {
-                    if (server.contains(":8848")) {
-                        tempServerList += server.split(":")[0] + ",";
-                    } else {
-                        tempServerList += server + ",";
-                    }
-                }
-            }
-            serverList = tempServerList.endsWith(",") ? tempServerList.substring(0,
-                tempServerList.length()-1) : tempServerList;
         }
         namespace = System.getenv("namespace") == null ?
             System.getProperty("namespace", properties.getProperty("namespace", "")) :
