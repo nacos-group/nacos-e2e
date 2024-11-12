@@ -38,27 +38,27 @@ spec:
           configMap:
             name: mysql-init-script
         - name: mysql-data
-  {{- end }}
+{{- end }}
 
 ---
-  {{- if eq .Values.nacos.storage.type "mysql"}}
+{{- if eq .Values.nacos.storage.type "mysql"}}
 apiVersion: v1
 kind: Service
 metadata:
   name: mysql
-  namespace: {{ .Values.namespace }
-    labels:
+  namespace: {{ .Values.namespace }}
+  labels:
+    name: mysql
+spec:
+  ports:
+    - port: {{ .Values.nacos.storage.db.port }}
+      targetPort: {{ .Values.nacos.storage.db.port }}
+  selector:
       name: mysql
-    spec:
-      ports:
-        - port: {{ .Values.nacos.storage.db.port }}
-          targetPort: {{ .Values.nacos.storage.db.port }}
-      selector:
-        name: mysql
-      {{- end }}
+{{- end }}
 
 ---
-  {{- if eq .Values.nacos.storage.type "mysql"}}
+{{- if eq .Values.nacos.storage.type "mysql"}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
