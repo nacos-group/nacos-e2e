@@ -58,6 +58,7 @@ spec:
 {{- end }}
 
 ---
+{{- if eq .Values.nacos.storage.type "mysql"}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -245,3 +246,4 @@ data:
                                      PRIMARY KEY (id),
                                      UNIQUE KEY uk_tenant_id (tenant_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='租户容量信息表';
+{{- end }}
