@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: {{ .Values.nacos.storage.db.host }}
-          image: nacos/nacos-mysql:5.7
+          image: mysql:5.7
           ports:
             - containerPort: {{ .Values.nacos.storage.db.port }}
           volumeMounts:
@@ -66,6 +66,8 @@ metadata:
   namespace: {{ .Values.namespace }}
 data:
   init.sql: |
+    CREATE DATABASE IF NOT EXISTS nacos_devtest;
+    USE nacos_devtest;
     CREATE TABLE config_info_gray1 (
                                        id bigint unsigned NOT NULL AUTO_INCREMENT COMMENT 'id',
                                        data_id varchar(255) NOT NULL COMMENT 'data_id',
