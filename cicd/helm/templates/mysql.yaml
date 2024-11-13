@@ -66,8 +66,6 @@ metadata:
   namespace: {{ .Values.namespace }}
 data:
   init.sql: |
-    DROP DATABASE IF EXISTS nacos_devtest;
-    CREATE DATABASE IF NOT EXISTS nacos_devtest;
     USE nacos_devtest;
     CREATE TABLE config_info_gray1 (
                                        id bigint unsigned NOT NULL AUTO_INCREMENT COMMENT 'id',
